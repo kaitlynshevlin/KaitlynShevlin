@@ -1,0 +1,85 @@
+\documentclass[12pt, letterpaper, titlepage]{article}
+
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{colorlinks = true, linkcolor = blue, citecolor=blue, urlcolor = blue}
+\usepackage{natbib}
+\usepackage{enumitem}
+\usepackage{setspace}
+
+\usepackage[pagewise]{lineno}
+\linenumbers*[1]
+% %% patches to make lineno work better with amsmath
+\newcommand*\patchAmsMathEnvironmentForLineno[1]{%
+ \expandafter\let\csname old#1\expandafter\endcsname\csname #1\endcsname
+ \expandafter\let\csname oldend#1\expandafter\endcsname\csname end#1\endcsname
+ \renewenvironment{#1}%
+ {\linenomath\csname old#1\endcsname}%
+ {\csname oldend#1\endcsname\endlinenomath}}%
+\newcommand*\patchBothAmsMathEnvironmentsForLineno[1]{%
+ \patchAmsMathEnvironmentForLineno{#1}%
+ \patchAmsMathEnvironmentForLineno{#1*}}%
+
+\AtBeginDocument{%
+ \patchBothAmsMathEnvironmentsForLineno{equation}%
+ \patchBothAmsMathEnvironmentsForLineno{align}%
+ \patchBothAmsMathEnvironmentsForLineno{flalign}%
+ \patchBothAmsMathEnvironmentsForLineno{alignat}%
+ \patchBothAmsMathEnvironmentsForLineno{gather}%
+ \patchBothAmsMathEnvironmentsForLineno{multline}%
+}
+
+
+
+\title{Survey of Misuses of the KS-Test}
+
+\author{Anthony Zeimbekakis and Jun Yan\\
+\href{mailto:anthony.zeimbekakis@uconn.edu}{\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
+Department of Statistics, University of Connecticut}
+\date{November 8, 2021}
+
+\begin{document}
+\maketitle
+
+\doublespace
+
+\begin{abstract}
+Abstract here.
+\end{abstract}
+
+
+\hypertarget{sec:intro}{%
+\section{Introduction}\label{sec:intro}}
+
+Introuction here.
+
+\hypertarget{sec:litrev}{%
+\section{Problem Under Serial Dependence}\label{sec:litrev}}
+
+Problem Under Serial Dependence here.
+
+\hypertarget{sec:data}{%
+\section{Simulation}\label{sec:data}}
+
+Simulation here.
+
+\hypertarget{sec:methods}{%
+\section{Real Data Analysis}\label{sec:methods}}
+
+Real Data Analysis here.
+
+\hypertarget{sec:disc}{%
+\section{Conclusion}\label{sec:disc}}
+
+Conclusion here.
+
+
+\bibliographystyle{chicago}
+\bibliography{citations.bib}
+
+
+\end{document}
