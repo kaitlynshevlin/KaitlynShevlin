@@ -1,0 +1,96 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(faux)
+library(MASS)
+library(xtable)
+```
+
+```{r}
+# Testing a simple random normal distribution
+test_normal <- function(n_tests, n_samples) {
+  results <- numeric(n_tests)
+  for(i in 1:n_tests) {
+    data <- rnorm(n_samples)
+    results[i] <- ks.test(data, "pnorm")$p.value
+  }
+  power_level <- 1 - sum(results < 0.05) / n_tests
+  cat("Number of tests:", n_tests, "\n")
+  cat("Number of samples:", n_samples, "\n")
+  cat("Power level:", power_level, "\n")
+}
+
+test_normal(10000, 10)
+test_normal(10000, 100)
+test_normal(10000, 1000)
+test_normal(10, 10000)
+test_normal(100, 10000)
+test_normal(1000, 10000)
+```
+
+```{r}
+test_rounded <- function(n_tests, n_samples, rounded) {
+  results <- numeric(n_tests)
+  for(i in 1:n_tests) {
+    data <- round(rnorm(n_samples), rounded)
+    results[i] <- ks.test(data, "pnorm")$p.value
+  }
+  power_level <- 1 - sum(results < 0.05) / n_tests
+  cat("Number of tests:", n_tests, "\n")
+  cat("Number of samples:", n_samples, "\n")
+  cat("Number of decimals:", rounded, "\n")
+  cat("Power level:", power_level, "\n")
+}
+
+suppressWarnings(test_rounded(1000, 10000, 3))
+suppressWarnings(test_rounded(1000, 10000, 2))
+suppressWarnings(test_rounded(1000, 10000, 1))
+```
+
+```{r}
+test_correlation <- function(n_tests, ars) {
+  results <- numeric(length(ars))
+  for(i in 1:length(ars)) {
+    ar_results <- numeric(n_tests)
+    for(j in 1:n_tests) {
+      data <- arima.sim(model = list(ar = ars[i]), rand.gen = rnorm, n = 500)
+      ar_results[j] <- round(ks.test(data, "pnorm")$p.value, 5)
+    }
+    results[i] <- sum(ar_results < 0.05) / n_tests
+  }
+  return(results)
+}
+ars <- seq(-0.95, 0.95, by = 0.025)
+results <- suppressWarnings(test_correlation(1000, ars))
+```
+
+```{r}
+plot(x = ars, y = results, xlab = "ar", ylab = "Type I Error Rate", col = ifelse(results < 0.05,'red','black'))
+lines(x = ars, y = rep(c(0.05), times = length(ars)), lty = 2)
+```
+
+```{r}
+test_table <- function(n_tests, n_samples) {
+  results <- numeric(n_tests)
+  for(i in 1:n_tests) {
+    data <- rnorm(n_samples)
+    results[i] <- ks.test(data, "pnorm")$p.value
+  }
+  power_level <- 1 - sum(results < 0.05) / n_tests
+  return(power_level)
+}
+Tests_Samples <- c("10000, 10", "10000, 100", "10000, 1000", "10, 10000", "100, 10000", "1000, 10000")
+Power_Level <- c(0, 0, 0, 0, 0, 0)
+tab <- data.frame(Tests_Samples, Power_Level)
+tab[1, "Power_Level"] <- test_table(10000, 10)
+tab[2, "Power_Level"] <- test_table(10000, 100)
+tab[3, "Power_Level"] <- test_table(10000, 1000)
+tab[4, "Power_Level"] <- test_table(10, 10000)
+tab[5, "Power_Level"] <- test_table(100, 10000)
+tab[6, "Power_Level"] <- test_table(1000, 10000)
+tab <- xtable(tab)
+tab
+```
