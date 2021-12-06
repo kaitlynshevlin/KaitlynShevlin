@@ -4,9 +4,8 @@ output: html_notebook
 ---
 
 ```{r}
-library(faux)
-library(MASS)
 library(xtable)
+library(dgof)
 ```
 
 ```{r}
@@ -17,12 +16,12 @@ test_normal <- function(n_tests, n_samples) {
     data <- rnorm(n_samples)
     results[i] <- ks.test(data, "pnorm")$p.value
   }
-  power_level <- 1 - sum(results < 0.05) / n_tests
-  cat("Number of tests:", n_tests, "\n")
-  cat("Number of samples:", n_samples, "\n")
-  cat("Power level:", power_level, "\n")
+  #power_level <- 1 - sum(results < 0.05) / n_tests
+  hist_title <- paste("P-values for n =", n_samples, "and", n_tests, "replicate tests")
+  hist(results, main = hist_title, xlab = "P-value")
 }
 
+par(mfrow=c(3,2))
 test_normal(10000, 10)
 test_normal(10000, 100)
 test_normal(10000, 1000)
@@ -38,13 +37,13 @@ test_rounded <- function(n_tests, n_samples, rounded) {
     data <- round(rnorm(n_samples), rounded)
     results[i] <- ks.test(data, "pnorm")$p.value
   }
-  power_level <- 1 - sum(results < 0.05) / n_tests
-  cat("Number of tests:", n_tests, "\n")
-  cat("Number of samples:", n_samples, "\n")
-  cat("Number of decimals:", rounded, "\n")
-  cat("Power level:", power_level, "\n")
+  #power_level <- 1 - sum(results < 0.05) / n_tests
+  hist_title <- paste("P-values with", rounded, "rounded decimals")
+  hist(results, main = hist_title, xlab = "P-value")
 }
 
+par(mfrow=c(2,2))
+suppressWarnings(test_rounded(1000, 10000, 4))
 suppressWarnings(test_rounded(1000, 10000, 3))
 suppressWarnings(test_rounded(1000, 10000, 2))
 suppressWarnings(test_rounded(1000, 10000, 1))
@@ -52,24 +51,32 @@ suppressWarnings(test_rounded(1000, 10000, 1))
 
 ```{r}
 test_correlation <- function(n_tests, ars) {
-  results <- numeric(length(ars))
   for(i in 1:length(ars)) {
     ar_results <- numeric(n_tests)
     for(j in 1:n_tests) {
-      data <- arima.sim(model = list(ar = ars[i]), rand.gen = rnorm, n = 500)
-      ar_results[j] <- round(ks.test(data, "pnorm")$p.value, 5)
+      data <- arima.sim(model = list(ar = ars[i]), rand.gen = rnorm, sd = sqrt(1-ars[i]^2), n = 500)
+      ar_results[j] <- ks.test(data, "pnorm")$p.value
     }
-    results[i] <- sum(ar_results < 0.05) / n_tests
+    hist_title <- paste("AR coefficient", ars[i])
+    hist(ar_results, main = hist_title, xlab = "P-value")
   }
-  return(results)
 }
-ars <- seq(-0.95, 0.95, by = 0.025)
-results <- suppressWarnings(test_correlation(1000, ars))
-```
 
+ars <- seq(-0.5, 0.5, by = 0.1)
+suppressWarnings(test_correlation(1000, ars))
+```
 ```{r}
-plot(x = ars, y = results, xlab = "ar", ylab = "Type I Error Rate", col = ifelse(results < 0.05,'red','black'))
-lines(x = ars, y = rep(c(0.05), times = length(ars)), lty = 2)
+check_var <- function(phi) {
+  data <- arima.sim(model = list(ar = phi), rand.gen = rnorm, sd = sqrt(1-phi^2), n = 10000)
+  cat("ar = ", phi, "\n")
+  cat("var = ", var(data), "\n")
+  cat("sd = ", sd(data), "\n")
+  cat("-----", "\n")
+}
+
+for (ar in seq(-0.95, 0.95, by = 0.05)) {
+  check_var(ar)
+}
 ```
 
 ```{r}
