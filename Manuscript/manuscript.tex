@@ -55,18 +55,40 @@ The Kolmogorov–Smirnov (KS) test is one the most popular goodness-of-fit tests
 \hypertarget{sec:intro}{%
 \section{Introduction}\label{sec:intro}}
 
-Introuction here.
+The Kolmogorov-Smirnov (K-S) statistic is one of the most popular goodness-of-fit tests for comparing a sample with a hypothesized parametric distribution. Given a sample of n observations, let $S_{n}(x)$ be the empirical cumulative distribution and $F(x)$ be the population cumulative distribution. The K-S statistic is defined by: \[d = max(\lvert F(x)-S_{n}(x) \rvert)\] If the value of $d$ exceeds the critical value given by the table, the null hypothesis that the observations are from a specified distribution is rejected. 
+
+However, the test is often misused. The standard one-sample K-S test applies to independent, continuous data with a hypothesized distribution that is completely satisfied. Often in literature, the test is applied to dependent, discrete, or rounded data, with hypothesized distributions containing estimated parameters. As shown by \citet{Steinskog} and later in this paper, the test is too conservative when the parameters are estimated. Throughout this paper, the cumulative distribution $F(x)$ is standard normal.
+
+To begin, a simple demonstration is performed to show the impact of sample size and replicate tests. For $n$ in $[10, 100, 1000]$, a random standard normal distributions were generated and K-S tests were performed. With the hypothesized distribution of standard normal, the histograms in Figure 1 show that the sample size has little effect on the distribution of P-values.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{Fig1}
+  \caption{Histograms of impact of sample size and number of tests on P-value.}
+  \label{fig:Fig1}
+\end{figure}
+
+The standard K-S test also shows misuse when the data has been rounded. For this simulation, standard normal distributions are rounded up to 4 decimal places. The histograms in Figure 2 display the distribution of P-values for the tests.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{Fig2}
+  \caption{Histograms of P-values with rounded data}
+  \label{fig:Fig2}
+\end{figure}
+
+As the level of rounding increases, the resulting P-values stray from the expected uniform distribution.
 
 \hypertarget{sec:litrev}{%
 \section{Problem Under Serial Dependence}\label{sec:litrev}}
 
-Problem Under Serial Dependence here.
+The K-S test shows significant issues in the case of serial dependence.
 
 \begin{table}[ht]
 \centering
 \begin{tabular}{rlr}
   \hline
- & Tests\_Samples & Power\_Level \\ 
+ & Tests, Samples & PowerLevel \\ 
   \hline
 1 & 10000, 10 & 0.95 \\ 
   2 & 10000, 100 & 0.96 \\ 
@@ -93,7 +115,12 @@ Real Data Analysis here.
 
 Conclusion here.
 
-Here is an example citation: \citet{Steinskog}
+Adding these to see the full bibliography: 
+
+\citet{Steinskog}
+\citet{Weiss}
+\citet{Massey}
+\citet{Lilliefors}
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}

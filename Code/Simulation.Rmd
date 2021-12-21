@@ -74,9 +74,9 @@ check_var <- function(phi) {
   cat("-----", "\n")
 }
 
-for (ar in seq(-0.95, 0.95, by = 0.05)) {
-  check_var(ar)
-}
+#for (ar in seq(-0.95, 0.95, by = 0.05)) {
+  #check_var(ar)
+#}
 ```
 
 ```{r}
@@ -100,4 +100,63 @@ tab[5, "Power_Level"] <- test_table(100, 10000)
 tab[6, "Power_Level"] <- test_table(1000, 10000)
 tab <- xtable(tab)
 tab
+```
+
+```{r}
+test_dgof <- function(n_tests, n_samples, rounded) {
+  results <- numeric(n_tests)
+  for(i in 1:n_tests) {
+    data <- round(rnorm(n_samples), rounded)
+    results[i] <- ks.test(data, "pnorm", exact = TRUE)$p.value
+  }
+  #power_level <- 1 - sum(results < 0.05) / n_tests
+  hist_title <- paste("P-values with", rounded, "rounded decimals")
+  hist(results, main = hist_title, xlab = "P-value")
+}
+
+par(mfrow=c(2,2))
+suppressWarnings(test_dgof(10000, 30, 4))
+suppressWarnings(test_dgof(10000, 30, 3))
+suppressWarnings(test_dgof(10000, 30, 2))
+suppressWarnings(test_dgof(10000, 30, 1))
+suppressWarnings(test_rounded(10000, 30, 4))
+suppressWarnings(test_rounded(10000, 30, 3))
+suppressWarnings(test_rounded(10000, 30, 2))
+suppressWarnings(test_rounded(10000, 30, 1))
+```
+
+```{r}
+test_parametric <- function(x, B = 200) {
+  mu <- mean(x)
+  sigma <- sd(x)
+  stat <- ks.test(x, "pnorm", mu, sigma)$statistic
+  n <- length(x)
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- rnorm(n, mu, sigma)
+    mu.b <- mean(x.b)
+    sigma.b <- sd(x.b)
+    stat.b[i] <- ks.test(x.b, "pnorm", mu.b, sigma.b)$statistic
+  }
+  p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
+  list(statistics = stat, p.value = p.value, 
+       estimate = c(mean = mu, sd = sigma),
+       stat.sim = stat.b)
+}
+
+pvals_parametric <- replicate(1000, test_parametric(rnorm(100), B = 200)$p.value)
+
+test_ks <- function(x) {
+  p.value <- ks.test(x, "pnorm", mean = mean(x), sd = sd(x))$p.value
+  list(p.value = p.value)
+}
+
+pvals_regular <- replicate(1000, test_ks(rnorm(100))$p.value)
+
+hist(pvals_parametric)
+hist(pvals_regular)
+```
+
+```{r}
+ks.test(pvals, "punif")
 ```
