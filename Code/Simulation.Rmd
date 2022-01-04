@@ -6,22 +6,23 @@ output: html_notebook
 ```{r}
 library(xtable)
 library(dgof)
+library(tidyverse)
 ```
 
 ```{r}
 # Testing a simple random normal distribution
 test_normal <- function(n_tests, n_samples) {
-  results <- numeric(n_tests)
+  p_values <- c()
   for(i in 1:n_tests) {
     data <- rnorm(n_samples)
-    results[i] <- ks.test(data, "pnorm")$p.value
+    p_values[i] <- ks.test(data, "pnorm")$p.value
   }
-  #power_level <- 1 - sum(results < 0.05) / n_tests
-  hist_title <- paste("P-values for n =", n_samples, "and", n_tests, "replicate tests")
-  hist(results, main = hist_title, xlab = "P-value")
+  results <- data.frame(p_values)
+  bins <- 1 + 3.322 * log(n_tests)
+  hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="black", fill="grey", bins = bins)
+  return(hist)
 }
 
-par(mfrow=c(3,2))
 test_normal(10000, 10)
 test_normal(10000, 100)
 test_normal(10000, 1000)
@@ -32,21 +33,23 @@ test_normal(1000, 10000)
 
 ```{r}
 test_rounded <- function(n_tests, n_samples, rounded) {
-  results <- numeric(n_tests)
+  p_values <- c()
   for(i in 1:n_tests) {
     data <- round(rnorm(n_samples), rounded)
-    results[i] <- ks.test(data, "pnorm")$p.value
+    p_values[i] <- ks.test(data, "pnorm")$p.value
   }
-  #power_level <- 1 - sum(results < 0.05) / n_tests
-  hist_title <- paste("P-values with", rounded, "rounded decimals")
-  hist(results, main = hist_title, xlab = "P-value")
+  results <- data.frame(p_values)
+  h <- hist(p_values, breaks = "FD", plot = FALSE)
+  hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="black", fill="grey", breaks = h$breaks)
+  return(hist)
 }
 
-par(mfrow=c(2,2))
 suppressWarnings(test_rounded(1000, 10000, 4))
 suppressWarnings(test_rounded(1000, 10000, 3))
 suppressWarnings(test_rounded(1000, 10000, 2))
 suppressWarnings(test_rounded(1000, 10000, 1))
+test_plot <- suppressWarnings(test_rounded(1000, 10000, 1))
+ggsave(filename="test_plot.pdf", plot=test_plot)
 ```
 
 ```{r}
@@ -65,6 +68,7 @@ test_correlation <- function(n_tests, ars) {
 ars <- seq(-0.5, 0.5, by = 0.1)
 suppressWarnings(test_correlation(1000, ars))
 ```
+
 ```{r}
 check_var <- function(phi) {
   data <- arima.sim(model = list(ar = phi), rand.gen = rnorm, sd = sqrt(1-phi^2), n = 10000)
@@ -73,10 +77,6 @@ check_var <- function(phi) {
   cat("sd = ", sd(data), "\n")
   cat("-----", "\n")
 }
-
-#for (ar in seq(-0.95, 0.95, by = 0.05)) {
-  #check_var(ar)
-#}
 ```
 
 ```{r}
@@ -103,26 +103,57 @@ tab
 ```
 
 ```{r}
-test_dgof <- function(n_tests, n_samples, rounded) {
-  results <- numeric(n_tests)
-  for(i in 1:n_tests) {
-    data <- round(rnorm(n_samples), rounded)
-    results[i] <- ks.test(data, "pnorm", exact = TRUE)$p.value
+y <- pnorm(seq(-10.1, 10, by = .1))
+sfun  <- stepfun(seq(-10, 10, by = .1), y)
+plot(y)
+plot(sfun)
+```
+
+```{r}
+test_dgof <- function(n_tests, n_samples, rounded, B = 100) {
+  results1 <- c()
+  results2 <- c()
+  results3 <- c()
+  left <- -10-rounded*0.1
+  y <- pnorm(seq(left, 10, by = rounded*0.1))
+  sfun  <- stepfun(seq(-10, 10, by = rounded*0.1), y)
+  for (i in 1:n_tests) {
+    test <- round(rnorm(n_samples), rounded)
+    cat(i)
+    results1[i] <- ks.test(test, sfun)$p.value
+    results2[i] <- ks.test(test, sfun, simulate.p.value = TRUE, B = B)$p.value
+    results3[i] <- ks.test(test, "pnorm")$p.value
   }
-  #power_level <- 1 - sum(results < 0.05) / n_tests
-  hist_title <- paste("P-values with", rounded, "rounded decimals")
-  hist(results, main = hist_title, xlab = "P-value")
+  hist(results1, xlab = "P-value")
+  hist(results2, xlab = "P-value")
+  hist(results3, xlab = "P-value")
 }
 
-par(mfrow=c(2,2))
-suppressWarnings(test_dgof(10000, 30, 4))
-suppressWarnings(test_dgof(10000, 30, 3))
-suppressWarnings(test_dgof(10000, 30, 2))
-suppressWarnings(test_dgof(10000, 30, 1))
-suppressWarnings(test_rounded(10000, 30, 4))
-suppressWarnings(test_rounded(10000, 30, 3))
-suppressWarnings(test_rounded(10000, 30, 2))
-suppressWarnings(test_rounded(10000, 30, 1))
+#suppressWarnings(test_dgof(1000, 30, 4))
+#suppressWarnings(test_dgof(1000, 30, 3))
+suppressWarnings(test_dgof(1000, 30, 2))
+suppressWarnings(test_dgof(1000, 30, 1))
+```
+
+```{r}
+test_dgofsimulate <- function(n_tests, n_samples, rounded, B = 100) {
+  results1 <- c()
+  results2 <- c()
+  left <- -10-rounded*0.1
+  y <- pnorm(seq(left, 10, by = rounded*0.1))
+  sfun  <- stepfun(seq(-10, 10, by = rounded*0.1), y)
+  for (i in 1:n_tests) {
+    test <- round(rnorm(n_samples), rounded)
+    cat(i)
+    results1[i] <- ks.test(test, sfun)$p.value
+    results2[i] <- ks.test(test, sfun, simulate.p.value = TRUE, B = B)$p.value
+  }
+  hist(results1, xlab = "P-value")
+  hist(results2, xlab = "P-value")
+}
+
+suppressWarnings(test_dgofsimulate(1000, 100, 1, 100))
+suppressWarnings(test_dgofsimulate(1000, 100, 2, 100))
 ```
 
 ```{r}
@@ -158,5 +189,6 @@ hist(pvals_regular)
 ```
 
 ```{r}
-ks.test(pvals, "punif")
+ks.test(pvals_parametric, "punif")
+ks.test(pvals_regular, "punif")
 ```
