@@ -17,18 +17,21 @@ test_normal <- function(n_tests, n_samples) {
     data <- rnorm(n_samples)
     p_values[i] <- ks.test(data, "pnorm")$p.value
   }
-  results <- data.frame(p_values)
-  bins <- 1 + 3.322 * log(n_tests)
-  hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="black", fill="grey", bins = bins)
-  return(hist)
+  return(p_values)
 }
 
-test_normal(10000, 10)
-test_normal(10000, 100)
-test_normal(10000, 1000)
-test_normal(10, 10000)
-test_normal(100, 10000)
-test_normal(1000, 10000)
+hist1 <- test_normal(10000, 10)
+hist2 <- test_normal(10000, 100)
+hist3 <- test_normal(10000, 1000)
+hist4 <- test_normal(10, 10000)
+hist5 <- test_normal(100, 10000)
+hist6 <- test_normal(1000, 10000)
+
+histogram <- c(rep("hist1", 10000), rep("hist2", 10000), rep("hist3", 10000), rep("hist4", 10), rep("hist5", 100), rep("hist6", 1000))
+p_values <- c(hist1, hist2, hist3, hist4, hist5, hist6)
+results <- data_frame(p_values, histogram)
+hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20)
+hist + facet_wrap(.~histogram, scales = "free_y")
 ```
 
 ```{r}
@@ -38,47 +41,43 @@ test_rounded <- function(n_tests, n_samples, rounded) {
     data <- round(rnorm(n_samples), rounded)
     p_values[i] <- ks.test(data, "pnorm")$p.value
   }
-  results <- data.frame(p_values)
-  h <- hist(p_values, breaks = "FD", plot = FALSE)
-  hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="black", fill="grey", breaks = h$breaks)
-  return(hist)
+  return(p_values)
 }
 
-suppressWarnings(test_rounded(1000, 10000, 4))
-suppressWarnings(test_rounded(1000, 10000, 3))
-suppressWarnings(test_rounded(1000, 10000, 2))
-suppressWarnings(test_rounded(1000, 10000, 1))
-test_plot <- suppressWarnings(test_rounded(1000, 10000, 1))
-ggsave(filename="test_plot.pdf", plot=test_plot)
+hist1 <- suppressWarnings(test_rounded(10000, 10000, 4))
+hist2 <- suppressWarnings(test_rounded(10000, 10000, 3))
+hist3 <- suppressWarnings(test_rounded(10000, 10000, 2))
+hist4 <- suppressWarnings(test_rounded(10000, 10000, 1))
+#ggsave(filename="test_plot.pdf", plot=test_plot)
+histogram <- c(rep("hist1", 10000), rep("hist2", 10000), rep("hist3", 10000), rep("hist4", 10000))
+p_values <- c(hist1, hist2, hist3, hist4)
+results <- data_frame(p_values, histogram)
+hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20)
+hist + facet_wrap(.~histogram, scales = "free_y")
 ```
 
 ```{r}
 test_correlation <- function(n_tests, ars) {
+  columns <- c("p_value", "ar")
+  ar_results <- data.frame(matrix(ncol = 2, nrow = 0))
+  colnames(ar_results) <- columns
   for(i in 1:length(ars)) {
-    ar_results <- numeric(n_tests)
     for(j in 1:n_tests) {
       data <- arima.sim(model = list(ar = ars[i]), rand.gen = rnorm, sd = sqrt(1-ars[i]^2), n = 500)
-      ar_results[j] <- ks.test(data, "pnorm")$p.value
+      ar_results <- add_row(ar_results, p_value = ks.test(data, "pnorm")$p.value, ar = ars[i])
     }
-    hist_title <- paste("AR coefficient", ars[i])
-    hist(ar_results, main = hist_title, xlab = "P-value")
   }
+  return(ar_results)
 }
 
 ars <- seq(-0.5, 0.5, by = 0.1)
-suppressWarnings(test_correlation(1000, ars))
+ar_results <- suppressWarnings(test_correlation(1000, ars))
 ```
 
 ```{r}
-check_var <- function(phi) {
-  data <- arima.sim(model = list(ar = phi), rand.gen = rnorm, sd = sqrt(1-phi^2), n = 10000)
-  cat("ar = ", phi, "\n")
-  cat("var = ", var(data), "\n")
-  cat("sd = ", sd(data), "\n")
-  cat("-----", "\n")
-}
+hist <- ggplot(ar_results, aes(x = p_value)) + geom_histogram(color="gray", fill="white", bins = 20)
+hist + facet_wrap(.~ar)
 ```
-
 ```{r}
 test_table <- function(n_tests, n_samples) {
   results <- numeric(n_tests)
@@ -103,57 +102,74 @@ tab
 ```
 
 ```{r}
-y <- pnorm(seq(-10.1, 10, by = .1))
-sfun  <- stepfun(seq(-10, 10, by = .1), y)
-plot(y)
-plot(sfun)
-```
-
-```{r}
 test_dgof <- function(n_tests, n_samples, rounded, B = 100) {
   results1 <- c()
   results2 <- c()
   results3 <- c()
-  left <- -10-rounded*0.1
-  y <- pnorm(seq(left, 10, by = rounded*0.1))
-  sfun  <- stepfun(seq(-10, 10, by = rounded*0.1), y)
+  left <- -4-rounded*0.1
+  y <- pnorm(seq(left, 4, by = rounded*0.1))
+  sfun  <- stepfun(seq(-4, 4, by = rounded*0.1), y)
   for (i in 1:n_tests) {
     test <- round(rnorm(n_samples), rounded)
-    cat(i)
     results1[i] <- ks.test(test, sfun)$p.value
     results2[i] <- ks.test(test, sfun, simulate.p.value = TRUE, B = B)$p.value
     results3[i] <- ks.test(test, "pnorm")$p.value
   }
-  hist(results1, xlab = "P-value")
-  hist(results2, xlab = "P-value")
-  hist(results3, xlab = "P-value")
+  list(results1 = results1, results2 = results2, results3 = results3)
 }
 
-#suppressWarnings(test_dgof(1000, 30, 4))
-#suppressWarnings(test_dgof(1000, 30, 3))
-suppressWarnings(test_dgof(1000, 30, 2))
-suppressWarnings(test_dgof(1000, 30, 1))
+test1 <- suppressWarnings(test_dgof(1000, 30, 4))
+test2 <- suppressWarnings(test_dgof(1000, 30, 3))
+test3 <- suppressWarnings(test_dgof(1000, 30, 2))
+test4 <- suppressWarnings(test_dgof(1000, 30, 1))
+
+hist1 <- test1$results1
+hist2 <- test1$results2
+hsit3 <- test1$results3
+hist4 <- test2$results1
+hist5 <- test2$results2
+hist6 <- test2$results3
+hist7 <- test3$results1
+hist8 <- test3$results2
+hist9 <- test3$results3
+hist10 <- test4$results1
+hist11 <- test4$results2
+hist12 <- test4$results3
+
+histogram <- c(rep(1:12, each = 1000))
+p_values <- c(hist1, hist2, hist3, hist4, hist5, hist6, hist7, hist8, hist9, hist10, hist11, hist12)
+results <- data_frame(p_values, histogram)
+hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20)
+hist + facet_wrap(.~histogram, scales = "free_y", ncol = 3)
 ```
 
 ```{r}
 test_dgofsimulate <- function(n_tests, n_samples, rounded, B = 100) {
   results1 <- c()
   results2 <- c()
-  left <- -10-rounded*0.1
-  y <- pnorm(seq(left, 10, by = rounded*0.1))
-  sfun  <- stepfun(seq(-10, 10, by = rounded*0.1), y)
+  left <- -4-rounded*0.1
+  y <- pnorm(seq(left, 4, by = rounded*0.1))
+  sfun  <- stepfun(seq(-4, 4, by = rounded*0.1), y)
   for (i in 1:n_tests) {
     test <- round(rnorm(n_samples), rounded)
-    cat(i)
     results1[i] <- ks.test(test, sfun)$p.value
     results2[i] <- ks.test(test, sfun, simulate.p.value = TRUE, B = B)$p.value
   }
-  hist(results1, xlab = "P-value")
-  hist(results2, xlab = "P-value")
+  list(results1 = results1, results2 = results2)
 }
 
-suppressWarnings(test_dgofsimulate(1000, 100, 1, 100))
-suppressWarnings(test_dgofsimulate(1000, 100, 2, 100))
+test1 <- suppressWarnings(test_dgofsimulate(1000, 100, 1, 100))
+test2 <- suppressWarnings(test_dgofsimulate(1000, 100, 2, 100))
+
+hist1 <- test1$results1
+hist2 <- test1$results2
+hist3 <- test2$results1
+hist4 <- test2$results2
+histogram <- c(rep("hist1", 1000), rep("hist2", 1000), rep("hist3", 1000), rep("hist4", 1000))
+p_values <- c(hist1, hist2, hist3, hist4)
+results <- data_frame(p_values, histogram)
+hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20)
+hist + facet_wrap(.~histogram, scales = "free_y")
 ```
 
 ```{r}
@@ -184,11 +200,12 @@ test_ks <- function(x) {
 
 pvals_regular <- replicate(1000, test_ks(rnorm(100))$p.value)
 
-hist(pvals_parametric)
-hist(pvals_regular)
-```
+histogram <- c(rep("parametric", 1000), rep("regular", 1000))
+p_values <- c(pvals_parametric, pvals_regular)
+results <- data_frame(p_values, histogram)
+hist <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20)
+hist + facet_wrap(.~histogram, scales = "free_y")
 
-```{r}
 ks.test(pvals_parametric, "punif")
 ks.test(pvals_regular, "punif")
 ```
