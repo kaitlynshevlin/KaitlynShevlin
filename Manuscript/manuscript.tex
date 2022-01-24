@@ -83,7 +83,7 @@ The K-S test shows significant issues in the case of fitted parameters.
 \hypertarget{sec:rounded}{%
 \section{Rounded Data}\label{sec:rounded}}
 
-The K-S test shows significant issues in the case of rounding data.
+Another assumption of the K-S test is that it applies to continuous data. Of course, in any case where the distribution is discrete, the test no longer applies and loses its power. To demonstrate this, simulations were conducted at varying levels of rounding. A random sample of size $10,000$ was collected from the standard normal distribution and subsequently rounded to the nearest degree, up to the ten thousandth. This simulation was replicated $10,000$ times for each rounding level and the results are shown in Figure~\ref{fig:hist_rounded}.
 
 \begin{figure}[!ht]
   \centering
@@ -91,6 +91,10 @@ The K-S test shows significant issues in the case of rounding data.
   \caption{Histograms of P-values with rounded data.}
   \label{fig:hist_rounded}
 \end{figure}
+
+From the histograms it is clear that though it appears the distributions of p-values hold a uniform shape through rounding to the thousandth, it quickly deviates as the rounding becomes stronger. This simulation shows that rounding can have an impact on the power of the K-S test as early as the hundreths place and discrete data should not be used.
+
+There are some solutions in the case that a discrete distribution is in question. The chi-squared test [INSERT REFERENCE HERE] is another goodness-of-fit test that can be applied to discrete distributions. However, the standard K-S test holds various advantages over it. In small samples, \citet{Massey} explains that the chi-squared test loses information and validity due to the grouping performed, while the K-S test treats individual observations separately. \citet{Massey} additionally notes that the K-S test generally appears to be the more powerful test regardless of sample size.
 
 \begin{figure}[!ht]
   \centering
@@ -129,6 +133,9 @@ Adding these to see the full bibliography:
 \citet{Weiss}
 \citet{Massey}
 \citet{Lilliefors}
+\citet{dgof}
+\citet{Conover}
+\citet{Gleser}
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}

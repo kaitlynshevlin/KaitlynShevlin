@@ -147,7 +147,7 @@ test_dgof <- function(n_tests, n_samples, digits, B = 100) {
   for (i in 1:n_tests) {
     
     if (i%%100 == 0) {
-      cat(i)
+      cat(i, " ")
     }
     
     # Generate random rounded data, perform 3 KS-tests, and store the p-values
@@ -159,7 +159,7 @@ test_dgof <- function(n_tests, n_samples, digits, B = 100) {
   }
   
   # Create a master data_frame for p-values
-  test <- c(rep("dgof", n_tests), rep("naive", n_tests))
+  test <- c(rep("dgof", n_tests), rep("Naive", n_tests))
   digits <- c(rep(.1^digits, 2*n_tests))
   p_values <- c(results1, results2)
   results <- data_frame(p_values, test, digits)
@@ -168,14 +168,13 @@ test_dgof <- function(n_tests, n_samples, digits, B = 100) {
 }
 
 # Create the histograms displaying p-values from each test
-test1 <- suppressWarnings(test_dgof(1000, 30, 3))
-test2 <- suppressWarnings(test_dgof(1000, 30, 2))
-test3 <- suppressWarnings(test_dgof(1000, 30, 1))
+test1 <- suppressWarnings(test_dgof(10000, 30, 3))
+test2 <- suppressWarnings(test_dgof(10000, 30, 2))
+test3 <- suppressWarnings(test_dgof(10000, 30, 1))
 results <- rbind(test1, test2, test3)
 
 # Generate histograms plot
 hist_dgof <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20) + geom_histogram(color="gray", fill="white", bins = 20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~test+digits, ncol = 3, scales = "free_y")
-hist_dgof
 ```
 
 ```{r}
@@ -202,7 +201,7 @@ test_dgofsimulate <- function(n_tests, n_samples, digits, B = 100) {
   }
   
   # Create a master data_frame for p-values
-  test <- c(rep("dgof", n_tests), rep("simulated", n_tests))
+  test <- c(rep("dgof", n_tests), rep("Simulated", n_tests))
   digits <- c(rep(.1^digits, 2*n_tests))
   p_values <- c(results1, results2)
   results <- data_frame(p_values, test, digits)
@@ -217,7 +216,6 @@ results <- rbind(test1, test2)
 
 # Generate histograms plot
 hist_dgofsim <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20) + geom_histogram(color="gray", fill="white", bins = 20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~test+digits, scales = "free_y")
-hist_dgofsim
 ```
 
 ```{r}
