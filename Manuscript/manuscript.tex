@@ -35,12 +35,12 @@
 
 
 
-\title{Survey of Misuses of the KS-Test}
+\title{Survey of Misuses of the Kolmogorov–Smirnov-Test}
 
 \author{Anthony Zeimbekakis and Jun Yan\\
 \href{mailto:anthony.zeimbekakis@uconn.edu}{\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
 Department of Statistics, University of Connecticut}
-\date{November 8, 2021}
+\date{January 23, 2021}
 
 \begin{document}
 \maketitle
@@ -63,55 +63,63 @@ To begin, a simple demonstration is performed to show the impact of sample size 
 
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=0.8\linewidth]{Fig1}
+  \includegraphics[width=0.8\linewidth]{hist_normal}
   \caption{Histograms of impact of sample size and number of tests on P-value.}
-  \label{fig:Fig1}
+  \label{fig:hist_normal}
 \end{figure}
 
-The standard K-S test also shows misuse when the data has been rounded. For this simulation, standard normal distributions are rounded up to 4 decimal places. The histograms in Figure 2 display the distribution of P-values for the tests.
+\hypertarget{sec:fitted}{%
+\section{Fitted Parameters}\label{sec:fitted}}
+
+The K-S test shows significant issues in the case of fitted parameters.
 
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=0.8\linewidth]{Fig2}
-  \caption{Histograms of P-values with rounded data}
-  \label{fig:Fig2}
+  \includegraphics[width=0.8\linewidth]{hist_parametric}
+  \caption{Histograms of P-values with parametric bootstrap.}
+  \label{fig:hist_parametric}
 \end{figure}
 
-As the level of rounding increases, the resulting P-values stray from the expected uniform distribution.
+\hypertarget{sec:rounded}{%
+\section{Rounded Data}\label{sec:rounded}}
 
-\hypertarget{sec:litrev}{%
-\section{Problem Under Serial Dependence}\label{sec:litrev}}
+The K-S test shows significant issues in the case of rounding data.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{hist_rounded}
+  \caption{Histograms of P-values with rounded data.}
+  \label{fig:hist_rounded}
+\end{figure}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{hist_dgof}
+  \caption{Histograms of P-values with dgof package.}
+  \label{fig:hist_dgof}
+\end{figure}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{hist_dgofsim}
+  \caption{Histograms of P-values when simulating p-value.}
+  \label{fig:hist_dgofsim}
+\end{figure}
+
+\hypertarget{sec:correlation}{%
+\section{Problem under Serial Dependence}\label{sec:correlation}}
 
 The K-S test shows significant issues in the case of serial dependence.
 
-\begin{table}[ht]
-\centering
-\begin{tabular}{rlr}
-  \hline
- & Tests, Samples & PowerLevel \\ 
-  \hline
-1 & 10000, 10 & 0.95 \\ 
-  2 & 10000, 100 & 0.96 \\ 
-  3 & 10000, 1000 & 0.95 \\ 
-  4 & 10, 10000 & 0.90 \\ 
-  5 & 100, 10000 & 0.92 \\ 
-  6 & 1000, 10000 & 0.94 \\ 
-   \hline
-\end{tabular}
-\end{table}
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{hist_correlation}
+  \caption{Histograms of P-values with correlated data.}
+  \label{fig:hist_correlation}
+\end{figure}
 
-\hypertarget{sec:data}{%
-\section{Simulation}\label{sec:data}}
-
-Simulation here.
-
-\hypertarget{sec:methods}{%
-\section{Real Data Analysis}\label{sec:methods}}
-
-Real Data Analysis here.
-
-\hypertarget{sec:disc}{%
-\section{Conclusion}\label{sec:disc}}
+\hypertarget{sec:conclusion}{%
+\section{Conclusion}\label{sec:conclusion}}
 
 Conclusion here.
 
