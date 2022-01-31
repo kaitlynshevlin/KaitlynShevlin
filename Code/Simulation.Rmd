@@ -271,6 +271,85 @@ ks.test(pvals_naive, "punif")
 ```
 
 ```{r}
+# Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
+nmblk <- function(n, l) {
+    b <- n / l
+    idx <- sample(seq(1, n - l + 1, by = l), b, replace = TRUE)
+    c(outer(0:(l - 1), idx, "+"))
+}
+
+mvblk <- function(n, l) {
+    b <- n / l
+    idx <- sample(1:(n - l + 1), b, replace = TRUE)
+    c(outer(0:(l - 1), idx, "+"))
+}
+
+test_block <- function(ar, B = 1000, l, n) {
+  
+  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
+  stat <- ks.test(x, "pnorm")$statistic
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- x[nmblk(n, l)]
+    stat.b[i] <- ks.test(x.b, "pnorm")$statistic
+  }
+  
+  p.value <- (sum(stat.b >= stat)) / (B + 1)
+  list(p.value = p.value)
+}
+
+# Naive KS-test to show consequence of fitted parameters
+test_naive_block <- function(ar, n) {
+  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
+  p.value <- ks.test(x, "pnorm")$p.value
+  list(p.value = p.value)
+}
+
+# Generate results
+pvals_block <- suppressWarnings(replicate(20, test_block(ar = 0.5, B = 1000, l = 5, n = 100)$p.value))
+pvals_block
+pvals_naive_block <- suppressWarnings(replicate(20, test_naive_block(ar = 0.5, n = 100)$p.value))
+
+# Create a master data_frame with all the results
+histogram <- c(rep("Block", 20), rep("Naive", 20))
+p_values <- c(pvals_block, pvals_naive_block)
+results <- data_frame(p_values, histogram)
+
+# Generate histograms plot
+hist_boot <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~histogram, scales = "free_y")
+hist_boot
+```
+
+```{r}
+# Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
+# Test parametric bootstrap as a solution to fitting parameters
+test_corr_block <- function(ar, B = 1000, l, n) {
+  
+  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
+  
+  # Store KS statistic from using fitted parameters
+  stat <- cor(x[-1], x[-length(x)])
+  
+  # Parametric bootstrap to approximate the null distribution
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- x[nmblk(n, l)]
+    stat.b[i] <- cor(x.b[-1], x.b[-length(x.b)])
+  }
+  
+  list(stat = stat, stat.b = stat.b)
+}
+
+do1rep <- function(ar, B = 1000, l, n) {
+    bt <- test_corr_block(ar, B, l, n)
+    c(bt$stat, sd(bt$stat.b))
+}
+
+corr_block <- suppressWarnings(replicate(50, do1rep(0.5, B = 1000, 10, 100)))
+corr_block
+```
+
+```{r}
 ggsave(filename="hist_normal.pdf", plot=hist_normal, path = "/Users/anthony/KS-Test-Thesis/Manuscript")
 ggsave(filename="hist_rounded.pdf", plot=hist_rounded, path = "/Users/anthony//KS-Test-Thesis/Manuscript")
 ggsave(filename="hist_correlation.pdf", plot=hist_correlation, path = "/Users/anthony/KS-Test-Thesis/Manuscript")
