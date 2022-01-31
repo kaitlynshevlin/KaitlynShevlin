@@ -11,42 +11,6 @@ library(tidyverse)
 ```
 
 ```{r}
-# Testing a simple random normal distribution
-test_normal <- function(n_tests, n_samples) {
-  
-  p_values <- c()
-  for(i in 1:n_tests) {
-    
-    # Generate random data, perform a KS-test, and store the p-value
-    data <- rnorm(n_samples)
-    p_values[i] <- ks.test(data, "pnorm")$p.value
-  }
-  
-  samples_str <- paste("Samples:", n_samples)
-  tests_str <- paste("Replicate tests:", n_tests)
-  
-  # Create a master data_frame for p-values
-  tests <- c(rep(tests_str, n_tests))
-  samples <- c(rep(samples_str, n_tests))
-  results <- data_frame(p_values, tests, samples)
-  
-  return(results)
-}
-
-# Create the histograms displaying p-values from each test
-test1 <- test_normal(10000, 10)
-test2 <- test_normal(10000, 100)
-test3 <- test_normal(10000, 1000)
-test4 <- test_normal(10, 10000)
-test5 <- test_normal(100, 10000)
-test6 <- test_normal(1000, 10000)
-results <- rbind(test1, test2, test3, test4, test5, test6)
-
-# Generate histograms plot
-hist_normal <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", bins = 20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~tests+samples, scales = "free_y")
-```
-
-```{r}
 # Test to show that rounding changes the power of the test
 test_rounded <- function(n_tests, n_samples, digits) {
   
@@ -105,30 +69,6 @@ ar_results <- suppressWarnings(test_correlation(1000, ars))
 
 # Generate histograms plot
 hist_correlation <- ggplot(ar_results, aes(x = p_value)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~ar, scales = "free_y", ncol = 3)
-```
-
-```{r}
-# Test the xtable package
-test_table <- function(n_tests, n_samples) {
-  results <- numeric(n_tests)
-  for(i in 1:n_tests) {
-    data <- rnorm(n_samples)
-    results[i] <- ks.test(data, "pnorm")$p.value
-  }
-  power_level <- 1 - sum(results < 0.05) / n_tests
-  return(power_level)
-}
-Tests_Samples <- c("10000, 10", "10000, 100", "10000, 1000", "10, 10000", "100, 10000", "1000, 10000")
-Power_Level <- c(0, 0, 0, 0, 0, 0)
-tab <- data.frame(Tests_Samples, Power_Level)
-tab[1, "Power_Level"] <- test_table(10000, 10)
-tab[2, "Power_Level"] <- test_table(10000, 100)
-tab[3, "Power_Level"] <- test_table(10000, 1000)
-tab[4, "Power_Level"] <- test_table(10, 10000)
-tab[5, "Power_Level"] <- test_table(100, 10000)
-tab[6, "Power_Level"] <- test_table(1000, 10000)
-tab <- xtable(tab)
-tab
 ```
 
 ```{r}
