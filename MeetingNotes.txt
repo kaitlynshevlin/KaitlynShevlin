@@ -1,0 +1,131 @@
+Meeting Notes
+——————————————————————————————————————————————
+10/26
+Introduction
+Three questions:
+- Why is it interesting/important?
+- What has been done?
+- What’s new?
+
+KS-Test
+- Assumptions:
+	- Data needs to be continuous
+	- Data needs to be independent
+	- Null is completely specified distribution
+- Specific member of distribution family
+- Violating either invalidates the test
+- Test needs to hold its size
+- Compare two tests:
+	- If both hold under null, higher power is better
+	- Show that power level does not hold for discrete
+- Demonstrate how poor the test performs with simulated dependent data
+- Done, will send notes
+——————————————————————————————————————————————
+11/8
+For next meeting:
+- Design simulation study to point out the problem
+	- Generate data from 
+	- Run KS-Test n times, a = 0.05, calculate power
+	- As dependence increases, size deviates from null hypothesis
+	- Show that discrete or rounded data invalidates the size of the test
+- Suppose normal(0,1) but they are dependent
+	- Experiment with sample size as well, dependence level too 0.2, 0.5
+	- Record p-value and if correct, should follow uniform(0,1)
+	- If dependent though, will not be uniform(0,1)
+	- If extra time: rounded data? Choose rounding level
+	- Clean up the Git page and manuscript
+
+Section 2: Problem under Serial Dependence
+Section 3: Simulation
+Section 4: Real Data analysis
+Section 5: Conclusion
+——————————————————————————————————————————————
+11/15
+Generate random vector of dimension n, sample size
+Multivariate normal distribution
+Mean vector is 0
+Covariance matrix
+AR1
+
+For next meeting:
+Start putting things into the paper
+Set up the bib file
+Focus on serially dependent
+Understand and implement Weiss paper
+——————————————————————————————————————————————
+11/29
+First do the naive approach, show that dependency invalidates the test
+Then implement Weiss’s fix, see how well it works
+Any other interesting work? Cited that paper?
+
+Always run two tests
+First is naive, then second is better solution
+Keep results in xtable r package
+**.ds store
+——————————————————————————————————————————————
+12/2
+Histogram of the p-values rather than summarizing
+If null is true, histogram should be standard uniform
+
+For next meeting:
+For each ar coefficient show histogram
+https://stats.stackexchange.com/questions/103405/prove-expression-for-variance-ar1
+Back solve so that sigma x^2 is 1
+——————————————————————————————————————————————
+12/6
+Add parametric bootstrap to paper
+Dgof is a package for using ks test with discrete data
+
+For completely specified distribution: parametric bootstrap
+For continuous: dgof maybe?
+For dependence: maybe block bootstrap version of parametric bootstrap for time series to fix issue with assumption
+
+Can you provide a solution to solve the worst case (all 3 are violated)?
+
+For next meeting:
+Apply dgof for rounded data
+What if unknown parameters? Parametric bootstrap
+https://jun-yan.github.io/stat-5361/boot.html#parametric-bootstrap
+——————————————————————————————————————————————
+12/21
+Paper structure:
+Section 1 Intro
+	Literature Review - Point out misuses and abuses of KS test
+Section 2 Fitted parameters
+	Demonstrate
+	Propose
+	Simulate
+Section 3 Discrete, rounded data
+Section 4 Problem under Serial Dependence
+**Section 5 Real Data (maybe, maybe in each section)
+Section 6 Conclusion
+
+Three problems
+Rounding, Discrete
+Autocorrelation
+
+	1.	Demonstrate the problem
+	2.	Propose solution
+——————————————————————————————————————————————
+12/21
+Ggplot for the graphics
+Save pdf function in r
+Dgof citation: https://cran.r-project.org/web/packages/dgof/citation.html
+https://influentialpoints.com/Training/Kolmogorov-Smirnov_test_use_and_misuse.htm
+——————————————————————————————————————————————
+1/4
+Makefile
+Ggplot facet
+Manuscript, references, writing
+Weiss solution?
+Can our solutions solve the worst case scenario?
+——————————————————————————————————————————————
+1/24
+For next meeting:
+Understand block bootstrap and how it applies to AR1 or AR2. Sim to check if it works
+Looks at citations of Weiss paper, see if there is any recent implementation, anything recent with code
+Notes into the repo
+Ggplot bin-width
+50 and 100 for every sample size
+——————————————————————————————————————————————
+1/31
