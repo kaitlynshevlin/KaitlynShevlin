@@ -11,6 +11,213 @@ library(tidyverse)
 ```
 
 ```{r}
+# Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
+# Test parametric bootstrap as a solution to fitting parameters
+test_parametric <- function(x, B = 1000) {
+  
+  # Summarize parameters
+  mu <- mean(x)
+  sigma <- sd(x)
+  
+  # Store KS statistic from using fitted parameters
+  stat <- ks.test(x, "pnorm", mu, sigma)$statistic
+  
+  # Parametric bootstrap to approximate the null distribution
+  n <- length(x)
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- rnorm(n, mu, sigma)
+    mu.b <- mean(x.b)
+    sigma.b <- sd(x.b)
+    stat.b[i] <- ks.test(x.b, "pnorm", mu.b, sigma.b)$statistic
+  }
+  p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
+  
+  list(p.value = p.value)
+}
+
+# Naive KS-test to show consequence of fitted parameters
+test_naive <- function(x) {
+  p.value <- ks.test(x, "pnorm", mean = mean(x), sd = sd(x))$p.value
+  list(p.value = p.value)
+}
+
+# Generate results
+pvals_parametric <- replicate(1000, test_parametric(rnorm(100), B = 1000)$p.value)
+pvals_naive <- replicate(1000, test_naive(rnorm(100))$p.value)
+
+# Create a master data_frame with all the results
+histogram <- c(rep("Parametric", 1000), rep("Naive", 1000))
+p_values <- c(pvals_parametric, pvals_naive)
+results <- data_frame(p_values, histogram)
+
+# Generate histograms plot
+hist_parametric <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~histogram, scales = "free_y")
+
+# Run KS-tests to check for uniform distribution
+ks.test(pvals_parametric, "punif")
+ks.test(pvals_naive, "punif")
+```
+
+```{r}
+noisy <- function(x) {
+  v <- var(x)
+  n <- length(x)
+  noise <- rnorm(n, mean = 0, sd = 1/100*v)
+  return(x + noise)
+}
+
+ar <- 0.5
+n <- 10
+x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
+x
+noisy(x)
+```
+
+```{r}
+# Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
+nmblk <- function(n, l) {
+    b <- n / l
+    idx <- sample(seq(1, n - l + 1, by = l), b, replace = TRUE)
+    c(outer(0:(l - 1), idx, "+"))
+}
+
+mvblk <- function(n, l) {
+    b <- n / l
+    idx <- sample(1:(n - l + 1), b, replace = TRUE)
+    c(outer(0:(l - 1), idx, "+"))
+}
+
+test_block <- function(x, B = 1000, l) {
+  
+  stat <- ks.test(x, "pnorm")$statistic
+
+  n <- length(x)
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- noisy(x[mvblk(n, l)])
+    # add small noise compared to variance of x. sd of noise is 1%, or 1/10%, of sd of regular variance
+    stat.b[i] <- ks.test(x.b, "pnorm")$statistic
+  }
+  p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
+  list(p.value = p.value)
+  
+}
+
+test_naive_block <- function(ar, n) {
+  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
+  p.value <- ks.test(x, "pnorm")$p.value
+  list(p.value = p.value)
+}
+
+ptm <- proc.time()
+
+ar = 0.5
+n = 100
+n_tests = 1000
+l = 10
+pvals_boot <- replicate(n_tests, test_block(arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n), B = 1000, l = l)$p.value)
+pvals_naive_block <- replicate(n_tests, test_naive_block(ar = ar, n = n)$p.value)
+
+# Create a master data_frame with all the results
+histogram <- c(rep("Boot", n_tests), rep("Naive", n_tests))
+p_values <- c(pvals_boot, pvals_naive_block)
+results <- data_frame(p_values, histogram)
+
+# Generate histograms plot
+hist_boot <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~histogram, scales = "free_y")
+hist_boot
+
+proc.time() - ptm
+```
+
+```{r}
+blkboot <- function(tseries, statistic, R, l) {
+  n <- length(tseries)
+
+  stat <- statistic(tseries)
+  
+  nm.stat <- replicate(R, statistic(noisy(tseries[nmblk(n, l)])))
+  mv.stat <- replicate(R, statistic(noisy(tseries[mvblk(n, l)])))
+  
+  nmp.value <- (sum(nm.stat >= stat) + 0.5) / (R + 1)
+  mvp.value <- (sum(mv.stat >= stat) + 0.5) / (R + 1)
+  
+  list(stat = stat, nmp.value = nmp.value, mvp.value = mvp.value)
+}
+
+ar1 <- function(x) ks.test(x, "pnorm")$statistic
+
+do1rep <- function(n, ar, l) {
+  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
+  bt <- blkboot(x, ar1, R = 1000, l)
+  list(stat = bt$stat, nmp.value = bt$nmp.value, mvp.value = bt$mvp.value)
+}
+
+ptm <- proc.time()
+
+n <- 100
+ar <- 0.5
+l = 5
+n_tests <- 1000
+
+pvals_boot2 <- replicate(n_tests, do1rep(n, ar, l)$mvp.value)
+pvals_naive_block <- replicate(n_tests, test_naive_block(ar = ar, n = n)$p.value)
+
+# Create a master data_frame with all the results
+histogram <- c(rep("Boot", n_tests), rep("Naive", n_tests))
+p_values <- c(pvals_boot2, pvals_naive_block)
+results <- data_frame(p_values, histogram)
+
+# Generate histograms plot
+hist_boot2 <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~histogram, scales = "free_y")
+hist_boot2
+
+proc.time() - ptm
+```
+```{r}
+ # Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
+ # Test parametric bootstrap as a solution to fitting parameters
+test_corr_block <- function(ar, B = 1000, l, n) {
+ 
+ x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
+ 
+ # Store KS statistic from using fitted parameters
+ stat <- cor(x[-1], x[-length(x)])
+ 
+ # Parametric bootstrap to approximate the null distribution
+ stat.b <- double(B)
+ for (i in 1:B) {
+   x.b <- x[nmblk(n, l)]
+   stat.b[i] <- cor(x.b[-1], x.b[-length(x.b)])
+ }
+ 
+ list(stat = stat, stat.b = stat.b)
+}
+
+do1rep <- function(ar, B = 1000, l, n) {
+   bt <- test_corr_block(ar, B, l, n)
+   c(bt$stat, sd(bt$stat.b))
+}
+
+corr_block <- suppressWarnings(replicate(50, do1rep(0.5, B = 1000, 10, 100)))
+corr_block
+```
+
+```{r}
+library(boot)
+
+fun <- function(x) {
+  x <- noisy(x)
+  p.value <- ks.test(x, "pnorm")$p.value
+  return(p.value)
+}
+
+test <- replicate(25, tsboot(arima.sim(list(ar = 0.5), rand.gen = rnorm, sd = sqrt(1-0.5^2), 100), fun, 1000, sim = "fixed", l = 5))
+hist(test[,1]$t)
+```
+
+```{r}
 # Test to show that rounding changes the power of the test
 test_rounded <- function(n_tests, n_samples, digits) {
   
@@ -26,58 +233,24 @@ test_rounded <- function(n_tests, n_samples, digits) {
 }
 
 # Create the histograms displaying p-values from each test
-hist1 <- suppressWarnings(test_rounded(10000, 100, 4))
-hist2 <- suppressWarnings(test_rounded(10000, 100, 3))
-hist3 <- suppressWarnings(test_rounded(10000, 100, 2))
-hist4 <- suppressWarnings(test_rounded(10000, 100, 1))
+hist1 <- suppressWarnings(test_rounded(1000, 100, 2))
+hist2 <- suppressWarnings(test_rounded(1000, 100, 1))
 
 # Create a master data_frame with all the results
-histogram <- c(rep(".0001", 10000), rep(".001", 10000), rep(".01", 10000), rep(".1", 10000))
-p_values <- c(hist1, hist2, hist3, hist4)
+histogram <- c(rep(".01", 1000), rep(".1", 1000))
+p_values <- c(hist1, hist2)
 results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
-hist_rounded <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value") + facet_wrap(.~histogram, scales = "free_y")
+hist_rounded <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~histogram, scales = "free_y")
 ```
 
 ```{r}
-# Test to show that autocorrelation changes the power of the test
-test_correlation <- function(n_tests, ars) {
-  
-  # Create a master data_frame for p-values
-  columns <- c("p_value", "ar")
-  ar_results <- data.frame(matrix(ncol = 2, nrow = 0))
-  colnames(ar_results) <- columns
-  
-  # For AR coefficients from -0.5 to 0.5
-  for(i in 1:length(ars)) {
-    
-    for(j in 1:n_tests) {
-      
-      # Generate random correlated data, perform a KS-test, and store the p-value
-      data <- arima.sim(model = list(ar = ars[i]), rand.gen = rnorm, sd = sqrt(1-ars[i]^2), n = 100)
-      ar_results <- add_row(ar_results, p_value = ks.test(data, "pnorm")$p.value, ar = ars[i])
-    }
-  }
-  
-  return(ar_results)
-}
-
- # Set AR coefficients and generate results
-ars <- seq(-0.5, 0.5, by = 0.1)
-ar_results <- suppressWarnings(test_correlation(1000, ars))
-
-# Generate histograms plot
-hist_correlation <- ggplot(ar_results, aes(x = p_value)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~ar, scales = "free_y", ncol = 3)
-```
-
-```{r}
-# Test the dgof package as a solution to rounded data with 30 or under samples
-test_dgof <- function(n_tests, n_samples, digits, B = 100) {
+# Test the KSgeneral package as a solution to rounded data
+test_general <- function(n_tests, n_samples, digits, B = 100) {
 
   results1 <- c()
   results2 <- c()
-  results3 <- c()
 
   # Create the rounded normal step function
   left <- -4-0.1^digits
@@ -86,9 +259,47 @@ test_dgof <- function(n_tests, n_samples, digits, B = 100) {
   
   for (i in 1:n_tests) {
     
-    if (i%%100 == 0) {
-      cat(i, " ")
-    }
+    # Generate random rounded data, perform 3 KS-tests, and store the p-values
+    # 1. Using the rounded normal step function
+    # 2. Using the naive continuous standard normal function
+    data <- round(rnorm(n_samples), digits)
+    results1[i] <- KSgeneral::disc_ks_test(data, sfun, exact = TRUE)$p.value
+    results2[i] <- dgof::ks.test(data, "pnorm")$p.value
+    
+  }
+  
+  # Create a master data_frame for p-values
+  test <- c(rep("KSgeneral", n_tests), rep("Naive", n_tests))
+  digits <- c(rep(.1^digits, 2*n_tests))
+  p_values <- c(results1, results2)
+  results <- data_frame(p_values, test, digits)
+  
+  return(results)
+}
+
+# Create the histograms displaying p-values from each test
+test1 <- suppressWarnings(test_general(1000, 100, 2))
+test2 <- suppressWarnings(test_general(1000, 100, 1))
+results <- rbind(test1, test2)
+
+# Generate histograms plot
+hist_general <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~test+digits, ncol = 2, scales = "free_y")
+hist_general
+```
+
+```{r}
+# Test the dgof package as a solution to rounded data with 30 or under samples
+test_dgof <- function(n_tests, n_samples, digits, B = 100) {
+
+  results1 <- c()
+  results2 <- c()
+
+  # Create the rounded normal step function
+  left <- -4-0.1^digits
+  y <- pnorm(seq(left, 4, by = 0.1^digits))
+  sfun  <- stepfun(seq(-4, 4, by = 0.1^digits), y)
+  
+  for (i in 1:n_tests) {
     
     # Generate random rounded data, perform 3 KS-tests, and store the p-values
     # 1. Using the rounded normal step function
@@ -96,6 +307,7 @@ test_dgof <- function(n_tests, n_samples, digits, B = 100) {
     data <- round(rnorm(n_samples), digits)
     results1[i] <- ks.test(data, sfun)$p.value
     results2[i] <- ks.test(data, "pnorm")$p.value
+    
   }
   
   # Create a master data_frame for p-values
@@ -108,14 +320,12 @@ test_dgof <- function(n_tests, n_samples, digits, B = 100) {
 }
 
 # Create the histograms displaying p-values from each test
-test1 <- suppressWarnings(test_dgof(10000, 100, 3))
-test2 <- suppressWarnings(test_dgof(10000, 100, 2))
-test3 <- suppressWarnings(test_dgof(10000, 100, 1))
-results <- rbind(test1, test2, test3)
+test1 <- suppressWarnings(test_dgof(1000, 100, 2))
+test2 <- suppressWarnings(test_dgof(1000, 100, 1))
+results <- rbind(test1, test2)
 
 # Generate histograms plot
-hist_dgof <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~test+digits, ncol = 3, scales = "free_y")
-hist_dgof
+hist_dgof <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~test+digits, ncol = 2, scales = "free_y")
 ```
 
 ```{r}
@@ -132,7 +342,7 @@ test_dgofsimulate <- function(n_tests, n_samples, digits, B = 100) {
   sfun  <- stepfun(seq(-4, 4, by = 0.1^digits), y)
   
   for (i in 1:n_tests) {
-    
+    cat(i, "\n")
     # Generate random rounded data, perform 2 KS-tests, and store the p-values
     # 1. Using the rounded normal step function
     # 2. Using the rounded normal step function with simulated p-values
@@ -160,140 +370,40 @@ hist_dgofsim <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray"
 ```
 
 ```{r}
-# Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
-# Test parametric bootstrap as a solution to fitting parameters
-test_parametric <- function(x, B = 1000) {
+# Test to show that autocorrelation changes the power of the test
+test_correlation <- function(n_tests, ars) {
   
-  # Summarize parameters
-  mu <- mean(x)
-  sigma <- sd(x)
+  # Create a master data_frame for p-values
+  columns <- c("p_value", "ar")
+  ar_results <- data.frame(matrix(ncol = 2, nrow = 0))
+  colnames(ar_results) <- columns
   
-  # Store KS statistic from using fitted parameters
-  stat <- ks.test(x, "pnorm", mu, sigma)$statistic
-  
-  # Parametric bootstrap to approximate the null distribution
-  n <- length(x)
-  stat.b <- double(B)
-  for (i in 1:B) {
-    x.b <- rnorm(n, mu, sigma)
-    mu.b <- mean(x.b)
-    sigma.b <- sd(x.b)
-    stat.b[i] <- ks.test(x.b, "pnorm", mu.b, sigma.b)$statistic
+  # For AR coefficients from -0.5 to 0.5
+  for(i in 1:length(ars)) {
+    
+    for(j in 1:n_tests) {
+      
+      # Generate random correlated data, perform a KS-test, and store the p-value
+      data <- arima.sim(model = list(ar = ars[i]), rand.gen = rnorm, sd = sqrt(1-ars[i]^2), n = 100)
+      ar_results <- add_row(ar_results, p_value = ks.test(data, "pnorm")$p.value, ar = round(ars[i], 1))
+    }
   }
-  p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
   
-  list(statistics = stat, p.value = p.value, 
-       estimate = c(mean = mu, sd = sigma),
-       stat.sim = stat.b)
+  return(ar_results)
 }
 
-# Naive KS-test to show consequence of fitted parameters
-test_naive <- function(x) {
-  p.value <- ks.test(x, "pnorm", mean = mean(x), sd = sd(x))$p.value
-  list(p.value = p.value)
-}
-
-# Generate results
-pvals_parametric <- replicate(1000, test_parametric(rnorm(100), B = 1000)$p.value)
-pvals_naive <- replicate(1000, test_naive(rnorm(100))$p.value)
-
-# Create a master data_frame with all the results
-histogram <- c(rep("Parametric", 1000), rep("Naive", 1000))
-p_values <- c(pvals_parametric, pvals_naive)
-results <- data_frame(p_values, histogram)
+ # Set AR coefficients and generate results
+ars <- seq(-0.3, 0.3, by = 0.1)
+ar_results <- test_correlation(1000, ars)
 
 # Generate histograms plot
-hist_parametric <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~histogram, scales = "free_y")
-
-# Run KS-tests to check for uniform distribution
-ks.test(pvals_parametric, "punif")
-ks.test(pvals_naive, "punif")
+hist_correlation <- ggplot(ar_results, aes(x = p_value)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~ar, scales = "free_y", ncol = 4)
 ```
 
 ```{r}
-# Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
-nmblk <- function(n, l) {
-    b <- n / l
-    idx <- sample(seq(1, n - l + 1, by = l), b, replace = TRUE)
-    c(outer(0:(l - 1), idx, "+"))
-}
-
-mvblk <- function(n, l) {
-    b <- n / l
-    idx <- sample(1:(n - l + 1), b, replace = TRUE)
-    c(outer(0:(l - 1), idx, "+"))
-}
-
-test_block <- function(ar, B = 1000, l, n) {
-  
-  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
-  stat <- ks.test(x, "pnorm")$statistic
-  stat.b <- double(B)
-  for (i in 1:B) {
-    x.b <- x[nmblk(n, l)]
-    stat.b[i] <- ks.test(x.b, "pnorm")$statistic
-  }
-  
-  p.value <- (sum(stat.b >= stat)) / (B + 1)
-  list(p.value = p.value)
-}
-
-# Naive KS-test to show consequence of fitted parameters
-test_naive_block <- function(ar, n) {
-  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
-  p.value <- ks.test(x, "pnorm")$p.value
-  list(p.value = p.value)
-}
-
-# Generate results
-pvals_block <- suppressWarnings(replicate(20, test_block(ar = 0.5, B = 1000, l = 5, n = 100)$p.value))
-pvals_block
-pvals_naive_block <- suppressWarnings(replicate(20, test_naive_block(ar = 0.5, n = 100)$p.value))
-
-# Create a master data_frame with all the results
-histogram <- c(rep("Block", 20), rep("Naive", 20))
-p_values <- c(pvals_block, pvals_naive_block)
-results <- data_frame(p_values, histogram)
-
-# Generate histograms plot
-hist_boot <- ggplot(results, aes(x = p_values)) + geom_histogram(color="gray", fill="white", boundary = 0, binwidth = 1/20, size = 1) + theme(text=element_text(size=14)) + scale_x_continuous(name = "p-value", breaks=c(0, 1)) + facet_wrap(.~histogram, scales = "free_y")
-hist_boot
-```
-
-```{r}
-# Split sample size into blocks, apply bootstrap onto blocks. Use that as x.b. Fit, stat.b
-# Test parametric bootstrap as a solution to fitting parameters
-test_corr_block <- function(ar, B = 1000, l, n) {
-  
-  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
-  
-  # Store KS statistic from using fitted parameters
-  stat <- cor(x[-1], x[-length(x)])
-  
-  # Parametric bootstrap to approximate the null distribution
-  stat.b <- double(B)
-  for (i in 1:B) {
-    x.b <- x[nmblk(n, l)]
-    stat.b[i] <- cor(x.b[-1], x.b[-length(x.b)])
-  }
-  
-  list(stat = stat, stat.b = stat.b)
-}
-
-do1rep <- function(ar, B = 1000, l, n) {
-    bt <- test_corr_block(ar, B, l, n)
-    c(bt$stat, sd(bt$stat.b))
-}
-
-corr_block <- suppressWarnings(replicate(50, do1rep(0.5, B = 1000, 10, 100)))
-corr_block
-```
-
-```{r}
-ggsave(filename="hist_normal.pdf", plot=hist_normal, path = "/Users/anthony/KS-Test-Thesis/Manuscript")
-ggsave(filename="hist_rounded.pdf", plot=hist_rounded, path = "/Users/anthony//KS-Test-Thesis/Manuscript")
-ggsave(filename="hist_correlation.pdf", plot=hist_correlation, path = "/Users/anthony/KS-Test-Thesis/Manuscript")
-ggsave(filename="hist_dgof.pdf", plot=hist_dgof, path = "/Users/anthony/KS-Test-Thesis/Manuscript")
-ggsave(filename="hist_dgofsim.pdf", plot=hist_dgofsim, path = "/Users/anthony/KS-Test-Thesis/Manuscript")
-ggsave(filename="hist_parametric.pdf", plot=hist_parametric, path = "/Users/anthony/KS-Test-Thesis/Manuscript")
+ggsave(filename="hist_parametric.pdf", plot=hist_parametric, path = "../Manuscript", width = 4, height = 2, units = "in")
+ggsave(filename="hist_rounded.pdf", plot=hist_rounded, path = "../Manuscript", width = 4, height = 2, units = "in")
+ggsave(filename="hist_dgof.pdf", plot=hist_dgof, path = "../Manuscript", width = 4, height = 4, units = "in")
+ggsave(filename="hist_dgofsim.pdf", plot=hist_dgofsim, path = "../Manuscript", width = 4, height = 4, units = "in")
+ggsave(filename="hist_correlation.pdf", plot=hist_correlation, path = "../Manuscript", width = 8, height = 4, units = "in")
 ```
