@@ -87,9 +87,9 @@ The K-S test shows significant issues in the case of fitted parameters. As previ
 
 To resolve this problem, parametric bootstrap can be performed. The parameters of the null distribution are approximated from the bootstrap. Figure~\ref{fig:hist_parametric} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In each parametric test, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated. In the naive case, K-S tests are performed with fitted parameters.
 
-\begin{figure}[!ht]
+\begin{figure}[tbp]
   \centering
-  \includegraphics[scale=0.7]{hist_parametric}
+  \includegraphics{hist_parametric}
   \caption{Histograms demonstrating fitted parameters.}
   \label{fig:hist_parametric}
 \end{figure}
@@ -101,9 +101,9 @@ Since the data is generated from a standard normal distributions with seemingly 
 
 Another assumption of the K-S test is that it applies to continuous data. This can be easily violated by performing a level of rounding on the data. Rounding causes the data to become discrete, and the K-S test can be shown to no longer apply. To demonstrate this, simulations were conducted at varying levels of rounding. A random sample of size $100$ was collected from the standard normal distribution and subsequently rounded to the degrees of $.01$ and  $.1$. This simulation was replicated $1000$ times for each rounding level and the results are shown in Figure~\ref{fig:hist_rounded}.
 
-\begin{figure}[!ht]
+\begin{figure}[tbp]
   \centering
-  \includegraphics[scale=0.7]{hist_rounded}
+  \includegraphics{hist_rounded}
   \caption{Histograms of P-values with rounded data.}
   \label{fig:hist_rounded}
 \end{figure}
@@ -112,20 +112,13 @@ As mentioned before, the expected distribution of p-values is $U(0,1)$. For roun
 
 There are some solutions in the case that a discrete distribution is in question. The chi-squared test is another goodness-of-fit test that can be applied to discrete distributions \citep{Massey}. However, the standard K-S test holds various advantages over it. In small samples, \citet{Massey} explains that the chi-squared test loses information and validity due to the grouping performed, while the K-S test treats individual observations separately. \citet{Massey} additionally notes that the K-S test generally appears to be the more powerful test regardless of sample size.
 
-In addition, a proposed revision of the K-S test can be found in \citet{dgof}.\citet{dgof} provides a revision to R's `ks-test()` function for the case that the null distribution is discrete.
+In addition, a proposed revision of the K-S test can be found in \citet{dgof}.\citet{dgof} provides a revision to R's `ks.test()` function for the case that the null distribution is discrete.
 
-\begin{figure}[!ht]
+\begin{figure}[tbp]
   \centering
-  \includegraphics[scale=0.7]{hist_dgof}
-  \caption{Histograms of P-values with dgof package.}
-  \label{fig:hist_dgof}
-\end{figure}
-
-\begin{figure}[!ht]
-  \centering
-  \includegraphics[scale=0.7]{hist_dgofsim}
-  \caption{Histograms of P-values when simulating p-value.}
-  \label{fig:hist_dgofsim}
+  \includegraphics{hist_general}
+  \caption{Histograms of P-values with KSGeneral and dgof packages.}
+  \label{fig:hist_general}
 \end{figure}
 
 \hypertarget{sec:correlation}{%
@@ -133,11 +126,18 @@ In addition, a proposed revision of the K-S test can be found in \citet{dgof}.\c
 
 The K-S test shows significant issues in the case of serial dependence.
 
-\begin{figure}[!ht]
+\begin{figure}[tbp]
   \centering
-  \includegraphics[scale=0.7]{hist_correlation}
+  \includegraphics{hist_correlation}
   \caption{Histograms of P-values with correlated data.}
   \label{fig:hist_correlation}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_block}
+  \caption{Histograms of P-values when using block bootstrap.}
+  \label{fig:hist_block}
 \end{figure}
 
 \hypertarget{sec:conclusion}{%
@@ -151,9 +151,15 @@ Adding these to see the full bibliography:
 \citet{Weiss}
 \citet{Massey}
 \citet{Lilliefors}
-\citet{dgof}
+\citet{Arnold}
 \citet{Conover}
 \citet{Gleser}
+\citet{Babu}
+\citet{Butorina}
+\citet{Racine}
+\citet{Wang}
+\citet{Capasso}
+\citet{Dimitrova}
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}
