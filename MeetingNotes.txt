@@ -139,3 +139,22 @@ Generate small normal noise with variance 1/10,000
 Sd will be 1/100, assume it does not change the structure
 
 # add small noise compared to variance of x. sd of noise is 1%, or 1/10%, of sd of regular variance
+——————————————————————————————————————————————
+2/12
+assume we know ar1 model, use arima.fit and parametric bootstrap
+generate bootstrap from fitted model
+maybe introduce ties in observed
+
+Tasks:
+1. Fix Ggplot figures
+2. Apply sources to introduction
+3. Babu and Rao bootstrap
+4. Assume ar1 model and perform parametric bootstrap
+5. KS general
+——————————————————————————————————————————————
+2/18
+Babu bootstrap bias solution
+Draw sample with replacement from observed data, based on bootstrap data you can fit theta hat star, empirical cdf is F*n
+From Babu, implement the bias term ks test thing. Perform non-parametric?
+——————————————————————————————————————————————
+2/25
