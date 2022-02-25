@@ -185,7 +185,7 @@ ggsave(filename = "hist_block.pdf", plot = hist_block, path = "../Manuscript", h
 proc.time() - ptm
 ```
 
-```{r}
+```{r snpar}
 test_snpar <- function(ar, n) {
   
   # Generate correlated data
@@ -216,8 +216,6 @@ hist_snpar <- ggplot(results) +
              scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
              facet_grid(~histogram) + 
              theme(legend.position = "none")
-
-hist_snpar
 ```
 
 ```{r hist_rounded}
@@ -254,6 +252,11 @@ hist_rounded <- ggplot(results) +
 
 # Save the histogram figure
 ggsave(filename = "hist_rounded.pdf", plot = hist_rounded, path = "../Manuscript", height = 2.1, width = 6)
+
+qqplot(hist1, runif(100), xlab = "Rounded", ylab = "Uniform", main = "Testing qqplot")
+abline(0, 1)
+p <- ggplot(results, aes(sample = p_values))
+p + stat_qq(distribution = stats::qunif) + geom_abline(intercept = 0, slope = 1) + xlim(0, 1) + ylim(0, 1)
 ```
 
 ```{r hist_general}
@@ -294,7 +297,7 @@ test_general <- function(n_tests, n_samples, digits, B = 100) {
 
 ptm <- proc.time()
 
-n_tests = 1000
+n_tests = 100
 n = 50
 
 # Create the histograms displaying p-values from each test
@@ -313,11 +316,14 @@ hist_general <- ggplot(results) +
 ggsave(filename = "hist_general.pdf", plot = hist_general, path = "../Manuscript", height = 4.2, width = 6)
 
 proc.time() - ptm
+
+qqplot(test1$p_values[1:100], runif(100), xlab = "KSGeneral", ylab = "Uniform", main = "Testing qqplot")
+abline(0, 1)
 # could try qqplot for unit interval
 # is qqplot close to 45 degree line, otherwise no
 ```
 
-```{r hist_correlationn}
+```{r hist_correlation}
 # Test to show that autocorrelation changes the power of the test
 test_correlation <- function(n_tests, ars) {
   
@@ -353,4 +359,138 @@ hist_correlation <- ggplot(ar_results) +
 
 # Save the histogram figure
 ggsave(filename = "hist_correlation.pdf", plot = hist_correlation, path = "../Manuscript", height = 2.1, width = 6)
+```
+
+```{r babu}
+ecdf.leftcont <- function (x) {
+    x <- sort(x)
+    n <- length(x)
+    if (n < 1) 
+        stop("'x' must have 1 or more non-missing values")
+    vals <- unique(x)
+    ## making it left continuous!
+    rval <- approxfun(vals, cumsum(tabulate(match(x, vals)))/n - 1/n, 
+        method = "constant", yleft = 0, yright = 1, f = 1, ties = "ordered")
+    class(rval) <- c("ecdf", "stepfun", class(rval))
+    assign("nobs", n, envir = environment(rval))
+    attr(rval, "call") <- sys.call()
+    rval
+}
+
+ks.np.babu <- function(x, B = 1000) {
+    ## for normal distribution only
+    n <- length(x)
+    Fn <- ecdf(x)
+    Gn <- ecdf.leftcont(x)
+    mu <- mean(x); ss <- sd(x)
+    Ftheta <- pnorm(x, mu, ss)
+    Bn1 <- Fn(x) - Ftheta
+    Bn2 <- Gn(x) - Ftheta
+    d1 <- abs(Bn1)
+    d2 <- abs(Bn2)
+    stat <- max(d1, d2)
+    stat.b <- double(B)
+    for (i in 1:B) {
+        x.b <- sample(x, size = n, replace = TRUE)
+        Fn.b <- ecdf(x.b)
+        Gn.b <- ecdf.leftcont(x.b)
+        mu.b <- mean(x.b); ss.b <- sd(x.b)
+        ## evaluate at x (not x.b)
+        Ftheta.b <- pnorm(x, mu.b, ss.b)
+        d1.b <- abs(Fn.b(x) - Ftheta.b - Bn1)
+        d2.b <- abs(Gn.b(x) - Ftheta.b - Bn2)
+        stat.b[i] <- max(d1.b, d2.b)
+    }
+    p.value <-  (sum(stat.b >= stat) + 0.5) / (B + 1)
+    list(p.value = p.value,
+         statistic = stat, stat.b = stat.b)
+}
+```
+
+```{r babu.ts}
+ks.np.babu.ts <- function(x, l, B = 1000) {
+  ## for normal distribution only
+  n <- length(x)
+  Fn <- ecdf(x)
+  Gn <- ecdf.leftcont(x)
+  mu <- mean(x); ss <- sd(x)
+  Ftheta <- pnorm(x, mu, ss)
+  Bn1 <- Fn(x) - Ftheta
+  Bn2 <- Gn(x) - Ftheta
+  d1 <- abs(Bn1)
+  d2 <- abs(Bn2)
+  stat <- max(d1, d2)
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- x[nmblk(n, 5)]
+    Fn.b <- ecdf(x.b)
+    Gn.b <- ecdf.leftcont(x.b)
+    mu.b <- mean(x.b); ss.b <- sd(x.b)
+    ## evaluate at x (not x.b)
+    Ftheta.b <- pnorm(x, mu.b, ss.b)
+    d1.b <- abs(Fn.b(x) - Ftheta.b - Bn1)
+    d2.b <- abs(Gn.b(x) - Ftheta.b - Bn2)
+    stat.b[i] <- max(d1.b, d2.b)
+  }
+  p.value <-  (sum(stat.b >= stat) + 0.5) / (B + 1)
+  list(p.value = p.value,
+       statistic = stat, stat.b = stat.b)
+}
+```
+
+```{r hist_babu}
+test_babu <- function(n_tests, n, ar, l) {
+
+  results1 <- double(n_tests)
+  results2 <- double(n_tests)
+  results3 <- double(n_tests)
+  
+  for (i in 1:n_tests) {
+    
+    cat(i, " ")
+    
+    x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n = n)
+    
+    results1[i] <- ks.np.babu.ts(x, l, B = 1000)$p.value
+    results2[i] <- blkboot(x, ks_statistic, R = 1000, l)$nmp.value
+    results3[i] <- ks.test(x, "pnorm")$p.value
+    
+  }
+  
+  # Create a master data_frame for p-values
+  test <- c(rep("Babu", n_tests), rep("Block", n_tests), rep("Naive", n_tests))
+  p_values <- c(results1, results2, results3)
+  results <- data_frame(p_values, test)
+  
+  return(results)
+}
+
+n_tests = 100
+n = 100
+l = 10
+ar = 0.5
+
+ptm <- proc.time()
+
+# Create the histograms displaying p-values from each test
+results <- suppressWarnings(test_babu(n_tests = n_tests, n = n, ar = ar, l = l))
+
+# Time per test
+(proc.time() - ptm)["elapsed"] / n_tests
+
+# Total time
+proc.time() - ptm
+
+# Generate histograms plot
+hist_babu <- ggplot(results) + 
+                geom_histogram(aes(x = p_values, fill = test), boundary = 0, binwidth = 1/20) + 
+                scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                facet_grid(~test) +
+                theme(legend.position = "none")
+hist_babu
+```
+
+```{r}
+#hist_babu1000
+#hist_babu_1000
 ```
