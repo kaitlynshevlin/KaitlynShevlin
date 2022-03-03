@@ -5,7 +5,9 @@ ks.ts.pb <- function(x, dist, B = 1000) {
     ## example assuming normal distribution; normal copula
     ## get observed stat
     n <- length(x)
-    stat  <- ks.test(x, dist)$statistic
+    mu <- mean(x)
+    sigma <- sd(x)
+    stat  <- ks.test(x, dist, mu, sigma)$statistic
     ## get lag-1 sample auto-spearman rho
     rho  <-  cor(x[-1], x[-n], method = "spearman")
     r <- iRho(normalCopula(), rho)
@@ -25,8 +27,8 @@ ks.ts.pb <- function(x, dist, B = 1000) {
         x.b <- qnorm(u)
         ## fit it
         mu.b <- mean(x.b)
-        sd.b <- sd(x.b)
-        stat.b[i] <- ks.test(x.b, dist, mu.b, sd.b)$statistic
+        sigma.b <- sd(x.b)
+        stat.b[i] <- ks.test(x.b, dist, mu.b, sigma.b)$statistic
     }
     
     p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
