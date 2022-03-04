@@ -162,3 +162,17 @@ Babu implementation works for only estimated parameters, not for time series
 Inverse cdf sampling method
 qnorm(runif(1000))
 One step dependence, monotone transformation. Spearman's row transfer
+——————————————————————————————————————————————
+3/4
+Generate from ar, transform to gamma
+Probability integral transformation
+qgamma instead of qnorm, change fitted parameters
+Clayton and other copulas, procedure should work under various copulas, not just normal
+Instead of arima, generate from 290-294, but use different copula
+Maybe ar2?
+If our guess isn't far from the true distribution it may still be reasonably accurate
+Generate from ar2
+
+For next time:
+1. Generate from ar2 instead of ar1, see if it works well
+2. Instead of generating from arima.sim, use the 290-294 loop to generate data. Use different copulas.
