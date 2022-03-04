@@ -96,6 +96,25 @@ To resolve this problem, parametric bootstrap can be performed. The parameters o
 
 Since the data is generated from a standard normal distributions with seemingly all assumptions met, a uniform distribution of $U(0,1)$ is expected for the p-values. The naive histogram shows that when the parameters are estimated there is notable deviation from the uniform distribution. However, through parametric bootstrap of the parameters the p-values appear to retain a uniform distribution.
 
+\hypertarget{sec:correlation}{%
+\section{Problem under Serial Dependence}\label{sec:correlation}}
+
+The K-S test shows significant issues in the case of serial dependence.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_correlation}
+  \caption{Histograms of P-values with correlated data.}
+  \label{fig:hist_correlation}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula}
+  \caption{Histograms demonstrating copula to correct correlation.}
+  \label{fig:hist_copula}
+\end{figure}
+
 \hypertarget{sec:rounded}{%
 \section{Rounded Data}\label{sec:rounded}}
 
@@ -119,25 +138,6 @@ In addition, a proposed revision of the K-S test can be found in \citet{dgof}.\c
   \includegraphics{hist_general}
   \caption{Histograms of P-values with KSGeneral and dgof packages.}
   \label{fig:hist_general}
-\end{figure}
-
-\hypertarget{sec:correlation}{%
-\section{Problem under Serial Dependence}\label{sec:correlation}}
-
-The K-S test shows significant issues in the case of serial dependence.
-
-\begin{figure}[tbp]
-  \centering
-  \includegraphics{hist_correlation}
-  \caption{Histograms of P-values with correlated data.}
-  \label{fig:hist_correlation}
-\end{figure}
-
-\begin{figure}[tbp]
-  \centering
-  \includegraphics{hist_copula}
-  \caption{Histograms demonstrating copula to correct correlation.}
-  \label{fig:hist_copula}
 \end{figure}
 
 \hypertarget{sec:conclusion}{%
