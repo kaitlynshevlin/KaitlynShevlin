@@ -85,13 +85,13 @@ However, the test is often misused. The standard one-sample K-S test applies to 
 
 The K-S test shows significant issues in the case of fitted parameters. As previously mentioned, one assumption of the K-S test is that the hypothesized distribution is completely specified. However, the procedure is sometimes performed where the population cumulative distribution $F(x)$ has parameters $\mu=\Xbar$, the sample mean, and $\sigma^2=s^2$, the sample variance \citep{Lilliefors}. \citet{Lilliefors} also shows that using the standard table when values of the mean and standard deviation are estimated obtains extremely conservative results. 
 
-To resolve this problem, parametric bootstrap can be performed. The parameters of the null distribution are approximated from the bootstrap. Figure~\ref{fig:hist_parametric} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In each parametric test, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated. In the naive case, K-S tests are performed with fitted parameters.
+To resolve this problem, parametric bootstrap can be performed. The parameters of the null distribution are approximated from the bootstrap. Figure~\ref{fig:hist_fitted} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In each parametric test, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated. In the naive case, K-S tests are performed with fitted parameters.
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_parametric}
+  \includegraphics{hist_fitted}
   \caption{Histograms demonstrating fitted parameters.}
-  \label{fig:hist_parametric}
+  \label{fig:hist_fitted}
 \end{figure}
 
 Since the data is generated from a standard normal distributions with seemingly all assumptions met, a uniform distribution of $U(0,1)$ is expected for the p-values. The naive histogram shows that when the parameters are estimated there is notable deviation from the uniform distribution. However, through parametric bootstrap of the parameters the p-values appear to retain a uniform distribution.
@@ -135,9 +135,9 @@ The K-S test shows significant issues in the case of serial dependence.
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_block}
-  \caption{Histograms of P-values when using block bootstrap.}
-  \label{fig:hist_block}
+  \includegraphics{hist_copula}
+  \caption{Histograms demonstrating copula to correct correlation.}
+  \label{fig:hist_copula}
 \end{figure}
 
 \hypertarget{sec:conclusion}{%
