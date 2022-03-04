@@ -1,34 +1,35 @@
 library(copula)
 library(dgof)
 
-ks.ts.pb <- function(x, dist, B = 1000) {
+ks.ts.pb <- function(x, dist, B = 100) {
     ## example assuming normal distribution; normal copula
     ## get observed stat
     n <- length(x)
     mu <- mean(x)
     sigma <- sd(x)
-    stat  <- ks.test(x, dist, mu, sigma)$statistic
+    stat  <- ks.test(x, dist, mean = mu, sd = sigma)$statistic
     ## get lag-1 sample auto-spearman rho
     rho  <-  cor(x[-1], x[-n], method = "spearman")
     r <- iRho(normalCopula(), rho)
+    np <- normalCopula(r)
     ## parametric bootstrap to get an empirical distribution of stat
     stat.b <- double(n)
     ## set up containers
-    u <- double(n)
     for (i in 1:B) {
         ## get one bootstrap sample
         ## 1. the marginal distribution is the fitted dist
         ## 2. there is temporal dependence
-        u <- runif(1)
+        u <- runif(n)
         for (j in 2:n) {
             ## could test other copulas later
-            u[j]  <- cCopula(u[j - 1], normalCopula(r))
+            u[j]  <- cCopula(c(u[j-1], u[j]), np, indices = 2, inverse = TRUE)
         }
-        x.b <- qnorm(u)
+        ## get bootstrap sample
+        x.b <- qnorm(u, mean = mu, sd = sigma)
         ## fit it
         mu.b <- mean(x.b)
         sigma.b <- sd(x.b)
-        stat.b[i] <- ks.test(x.b, dist, mu.b, sigma.b)$statistic
+        stat.b[i] <- ks.test(x.b, dist, mean = mu.b, sd = sigma.b)$statistic
     }
     
     p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
@@ -41,3 +42,10 @@ n <- 100
 ar = 0.5
 x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n = n)
 ks.ts.pb(x, "pnorm")
+
+nrep <- 100
+pval <- replicate(nrep, ks.ts.pb(arima.sim(list(ar = ar),
+                                          rand.gen=rnorm,
+                                          sd = sqrt(1 - ar^2), n = n),
+                                "pnorm"))
+hist(pval)
