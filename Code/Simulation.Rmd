@@ -9,7 +9,7 @@ library(xtable)
 library(dgof)
 library(tidyverse)
 library(KSgeneral)
-library(snpar)
+library(copula)
 ```
 
 ```{r hist_parametric}
@@ -31,11 +31,18 @@ test_parametric <- function(x, B = 1000) {
     mu.b <- mean(x.b)
     sigma.b <- sd(x.b)
     stat.b[i] <- ks.test(x.b, "pnorm", mu.b, sigma.b)$statistic
-    # write own ks test statistic formula here
-    # is.character(y)
   }
   p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
-  
+
+  counter <<- counter + 1
+  cat(counter, "")
+  list(p.value = p.value)
+}
+
+test_babu <- function(x, B = 1000) {
+  p.value <- ks.np.babu(x, B = 1000)$p.value
+  counter <<- counter + 1
+  cat(counter, "")
   list(p.value = p.value)
 }
 
@@ -46,176 +53,28 @@ test_naive <- function(x) {
 }
 
 # Generate results
-pvals_parametric <- replicate(100, test_parametric(rnorm(100), B = 1000)$p.value)
-pvals_naive <- replicate(100, test_naive(rnorm(100))$p.value)
+n_tests = 100
+n = 100
+counter <- 0
+pvals_parametric <- replicate(n_tests, test_parametric(rnorm(n), B = 1000)$p.value)
+counter <- 0
+pvals_babu <- replicate(n_tests, test_babu(rnorm(n), B = 1000)$p.value)
+pvals_naive <- replicate(n_tests, test_naive(rnorm(n))$p.value)
 
 # Create a master data_frame with all the results
-histogram <- c(rep("Parametric", 100), rep("Naive", 100))
-p_values <- c(pvals_parametric, pvals_naive)
+histogram <- c(rep("Parametric", n_tests), rep("Babu", n_tests), rep("Naive", n_tests))
+p_values <- c(pvals_parametric, pvals_babu, pvals_naive)
 results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
-hist_parametric <- ggplot(results) + 
+hist_fitted <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
                    facet_wrap(~histogram, scales = "free_y")
 
 # Save the histogram figure
-ggsave(filename = "hist_parametric.pdf", plot = hist_parametric, path = "../Manuscript", height = 2.1, width = 6)
-```
-
-```{r block functions}
-# Functions supporting block bootstrap
-
-# Add small noise to data
-add_noise <- function(x) {
-  
-  # Grab variance and length
-  v <- var(x)
-  n <- length(x)
-  
-  # Generate noise where standard deviation is 1% of variance
-  noise <- rnorm(n, mean = 0, sd = 1/100*v)
-  
-  # Return jittered data
-  return(x + noise)
-}
-
-# Non-moving block generation
-nmblk <- function(n, l) {
-
-  # Number of blocks
-  b <- n / l
-  
-  # Create non-moving block indices
-  idx <- sample(seq(1, n - l + 1, by = l), b, replace = TRUE)
-  
-  # Return indices
-  c(outer(0:(l - 1), idx, "+"))
-}
-
-# Moving block generation
-mvblk <- function(n, l) {
-    
-  # Number of blocks
-  b <- n / l
-  
-  # Create moving block indices
-  idx <- sample(1:(n - l + 1), b, replace = TRUE)
-  
-  # Return indices
-  c(outer(0:(l - 1), idx, "+"))
-}
-```
-
-```{r hist_block}
-# Block bootstrap function
-blkboot <- function(tseries, statistic, R, l) {
-  
-  n <- length(tseries)
-  
-  # Gather observed statistic
-  stat <- statistic(tseries)
-  
-  # Replicate block bootstrap samples with noise
-  nm.stat <- replicate(R, statistic(add_noise(tseries[nmblk(n, l)])))
-  mv.stat <- replicate(R, statistic(add_noise(tseries[mvblk(n, l)])))
-  
-  # Calculate p-values
-  nmp.value <- (sum(nm.stat >= stat) + 0.5) / (R + 1)
-  mvp.value <- (sum(mv.stat >= stat) + 0.5) / (R + 1)
-  
-  list(stat = stat, nmp.value = nmp.value, mvp.value = mvp.value)
-}
-
-# Calculate ks-statistic
-ks_statistic <- function(x) ks.test(x, "pnorm")$statistic
-
-# 1 test
-do1rep <- function(n, ar, l) {
-  
-  # Create correlated data
-  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
-  
-  # Apply block bootstrap
-  bt <- blkboot(x, ks_statistic, R = 1000, l)
-  
-  list(stat = bt$stat, nmp.value = bt$nmp.value, mvp.value = bt$mvp.value)
-}
-
-# Naive example
-test_naive_block <- function(ar, n) {
-  
-  # Generate correlated data
-  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
-  
-  # Gather p-value
-  p.value <- ks.test(x, "pnorm")$p.value
-  
-  list(p.value = p.value)
-}
-
-ptm <- proc.time()
-
-n <- 100
-ar <- 0.5
-l = 5
-n_tests <- 100
-
-# Generate results
-pvals_block <- replicate(n_tests, do1rep(n, ar, l)$mvp.value)
-pvals_naive_block <- replicate(n_tests, test_naive_block(ar = ar, n = n)$p.value)
-
-# Create a master data_frame with all the results
-histogram <- c(rep("Block", n_tests), rep("Naive", n_tests))
-p_values <- c(pvals_block, pvals_naive_block)
-results <- data_frame(p_values, histogram)
-
-# Generate histograms plot
-hist_block <- ggplot(results) +
-             geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
-             scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
-             facet_grid(~histogram) +
-             theme(legend.position = "none")
-
-# Save the histogram figure
-ggsave(filename = "hist_block.pdf", plot = hist_block, path = "../Manuscript", height = 2.1, width = 6)
-
-proc.time() - ptm
-```
-
-```{r snpar}
-test_snpar <- function(ar, n) {
-  
-  # Generate correlated data
-  x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n)
-  
-  # Gather p-value
-  p.value <- snpar::KS.test(x, "pnorm")$p.value
-  
-  list(p.value = p.value)
-}
-
-n <- 100
-ar <- 0.5
-n_tests <- 1000
-
-# Generate results
-pvals_snpar <- replicate(n_tests, test_snpar(ar = ar, n = n)$p.value)
-pvals_naive_block <- replicate(n_tests, test_naive_block(ar = ar, n = n)$p.value)
-
-# Create a master data_frame with all the results
-histogram <- c(rep("snpar", n_tests), rep("Naive", n_tests))
-p_values <- c(pvals_snpar, pvals_naive_block)
-results <- data_frame(p_values, histogram)
-
-# Generate histograms plot
-hist_snpar <- ggplot(results) +
-             geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
-             scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
-             facet_grid(~histogram) + 
-             theme(legend.position = "none")
+ggsave(filename = "hist_fitted.pdf", plot = hist_fitted, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
 ```{r hist_rounded}
@@ -235,11 +94,13 @@ test_rounded <- function(n_tests, n_samples, digits) {
 }
 
 # Create the histograms displaying p-values from each test
-hist1 <- suppressWarnings(test_rounded(1000, 100, 2))
-hist2 <- suppressWarnings(test_rounded(1000, 100, 1))
+n_tests <- 1000
+n <- 100
+hist1 <- suppressWarnings(test_rounded(n_tests, n, 2))
+hist2 <- suppressWarnings(test_rounded(n_tests, n, 1))
 
 # Create a master data_frame with all the results
-histogram <- c(rep(".01", 1000), rep(".1", 1000))
+histogram <- c(rep(".01", n_tests), rep(".1", n_tests))
 p_values <- c(hist1, hist2)
 results <- data_frame(p_values, histogram)
 
@@ -261,7 +122,7 @@ p + stat_qq(distribution = stats::qunif) + geom_abline(intercept = 0, slope = 1)
 
 ```{r hist_general}
 # Test the KSgeneral package as a solution to rounded data
-test_general <- function(n_tests, n_samples, digits, B = 100) {
+test_general <- function(n_tests, n_samples, digits, B) {
 
   results1 <- double(n_tests)
   results2 <- double(n_tests)
@@ -274,7 +135,7 @@ test_general <- function(n_tests, n_samples, digits, B = 100) {
   sfun  <- stepfun(seq(-4, 4, by = 0.1^digits), y)
   
   for (i in 1:n_tests) {
-    
+    cat(i, "")
     # Generate random rounded data, perform 3 KS-tests, and store the p-values
     # 1. Using the rounded normal step function
     # 2. Using the naive continuous standard normal function
@@ -283,7 +144,6 @@ test_general <- function(n_tests, n_samples, digits, B = 100) {
     results2[i] <- dgof::ks.test(data, sfun)$p.value
     results3[i] <- ks.test(data, sfun, simulate.p.value = TRUE, B = B)$p.value
     results4[i] <- ks.test(data, "pnorm")$p.value
-    
   }
   
   # Create a master data_frame for p-values
@@ -298,11 +158,12 @@ test_general <- function(n_tests, n_samples, digits, B = 100) {
 ptm <- proc.time()
 
 n_tests = 100
-n = 50
+n = 100
+B = 1000
 
 # Create the histograms displaying p-values from each test
-test1 <- suppressWarnings(test_general(n_tests, n, 2))
-test2 <- suppressWarnings(test_general(n_tests, n, 1))
+test1 <- suppressWarnings(test_general(n_tests, n, digits = 2, B = B))
+test2 <- suppressWarnings(test_general(n_tests, n, digits = 1, B = B))
 results <- rbind(test1, test2)
 
 # Generate histograms plot
@@ -407,90 +268,74 @@ ks.np.babu <- function(x, B = 1000) {
 }
 ```
 
-```{r babu.ts}
-ks.np.babu.ts <- function(x, l, B = 1000) {
-  ## for normal distribution only
-  n <- length(x)
-  Fn <- ecdf(x)
-  Gn <- ecdf.leftcont(x)
-  mu <- mean(x); ss <- sd(x)
-  Ftheta <- pnorm(x, mu, ss)
-  Bn1 <- Fn(x) - Ftheta
-  Bn2 <- Gn(x) - Ftheta
-  d1 <- abs(Bn1)
-  d2 <- abs(Bn2)
-  stat <- max(d1, d2)
-  stat.b <- double(B)
-  for (i in 1:B) {
-    x.b <- x[nmblk(n, 5)]
-    Fn.b <- ecdf(x.b)
-    Gn.b <- ecdf.leftcont(x.b)
-    mu.b <- mean(x.b); ss.b <- sd(x.b)
-    ## evaluate at x (not x.b)
-    Ftheta.b <- pnorm(x, mu.b, ss.b)
-    d1.b <- abs(Fn.b(x) - Ftheta.b - Bn1)
-    d2.b <- abs(Gn.b(x) - Ftheta.b - Bn2)
-    stat.b[i] <- max(d1.b, d2.b)
-  }
-  p.value <-  (sum(stat.b >= stat) + 0.5) / (B + 1)
-  list(p.value = p.value,
-       statistic = stat, stat.b = stat.b)
-}
-```
-
-```{r hist_babu}
-test_babu <- function(n_tests, n, ar, l) {
-
-  results1 <- double(n_tests)
-  results2 <- double(n_tests)
-  results3 <- double(n_tests)
-  
-  for (i in 1:n_tests) {
+```{r}
+test_copula <- function(x, dist, B = 100) {
+    ## example assuming normal distribution; normal copula
+    ## get observed stat
+    n <- length(x)
+    mu <- mean(x)
+    sigma <- sd(x)
+    stat  <- ks.test(x, dist, mean = mu, sd = sigma)$statistic
+    ## get lag-1 sample auto-spearman rho
+    rho  <-  cor(x[-1], x[-n], method = "spearman")
+    r <- iRho(normalCopula(), rho)
+    np <- normalCopula(r)
+    ## parametric bootstrap to get an empirical distribution of stat
+    stat.b <- double(n)
+    ## set up containers
+    for (i in 1:B) {
+        ## get one bootstrap sample
+        ## 1. the marginal distribution is the fitted dist
+        ## 2. there is temporal dependence
+        u <- runif(n)
+        for (j in 2:n) {
+            ## could test other copulas later
+            u[j]  <- cCopula(c(u[j-1], u[j]), np, indices = 2, inverse = TRUE)
+        }
+        ## get bootstrap sample
+        x.b <- qnorm(u, mean = mu, sd = sigma)
+        ## fit it
+        mu.b <- mean(x.b)
+        sigma.b <- sd(x.b)
+        stat.b[i] <- ks.test(x.b, dist, mean = mu.b, sd = sigma.b)$statistic
+    }
     
-    cat(i, " ")
+    p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
     
-    x <- arima.sim(list(ar = ar), rand.gen = rnorm, sd = sqrt(1-ar^2), n = n)
+    counter <<- counter + 1
+    cat(counter)
     
-    results1[i] <- ks.np.babu.ts(x, l, B = 1000)$p.value
-    results2[i] <- blkboot(x, ks_statistic, R = 1000, l)$nmp.value
-    results3[i] <- ks.test(x, "pnorm")$p.value
-    
-  }
-  
-  # Create a master data_frame for p-values
-  test <- c(rep("Babu", n_tests), rep("Block", n_tests), rep("Naive", n_tests))
-  p_values <- c(results1, results2, results3)
-  results <- data_frame(p_values, test)
-  
-  return(results)
+    return(p.value)
+    # return empirical p-value    
 }
 
-n_tests = 100
-n = 100
-l = 10
+# Naive KS-test
+test_naive_copula <- function(x) {
+  p.value <- ks.test(x, "pnorm")$p.value
+  list(p.value = p.value)
+}
+
+# Generate results
+n <- 100
 ar = 0.5
+counter <- 0
+nrep <- 1000
+pvals_copula <- replicate(nrep, test_copula(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), "pnorm"))
+pvals_naive <- replicate(nrep, test_naive_copula(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
 
-ptm <- proc.time()
-
-# Create the histograms displaying p-values from each test
-results <- suppressWarnings(test_babu(n_tests = n_tests, n = n, ar = ar, l = l))
-
-# Time per test
-(proc.time() - ptm)["elapsed"] / n_tests
-
-# Total time
-proc.time() - ptm
+# Create a master data_frame with all the results
+histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
+p_values <- c(pvals_copula, pvals_naive)
+results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
-hist_babu <- ggplot(results) + 
-                geom_histogram(aes(x = p_values, fill = test), boundary = 0, binwidth = 1/20) + 
-                scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
-                facet_grid(~test) +
-                theme(legend.position = "none")
-hist_babu
-```
+hist_copula <- ggplot(results) + 
+                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
+                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                   theme(legend.position = "none") +
+                   facet_wrap(~histogram, scales = "free_y")
+hist_copula
 
-```{r}
-#hist_babu1000
-#hist_babu_1000
+# Save the histogram figure
+ggsave(filename = "hist_copula.pdf", plot = hist_copula, path = "../Manuscript", height = 2.1, width = 6)
 ```
