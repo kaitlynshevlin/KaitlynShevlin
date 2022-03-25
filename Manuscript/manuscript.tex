@@ -76,16 +76,24 @@ The Kolmogorov-Smirnov (KS) test is one the most popular goodness-of-fit tests f
 \hypertarget{sec:intro}{%
 \section{Introduction}\label{sec:intro}}
 
-The Kolmogorov-Smirnov (K-S) statistic is one of the most popular goodness-of-fit tests for comparing a sample with a hypothesized parametric distribution. Given a sample of n observations, let $S_{n}(x)$ be the empirical cumulative distribution and $F(x)$ be the population cumulative distribution. The K-S statistic is defined by: \[d = max(\lvert F(x)-S_{n}(x) \rvert)\] The null hypothesis is that the observations are from the specified distribution $F(x)$, and the alternate hypothesis is that the data is not from $F(x)$. If the value of $d$ exceeds the critical value given by a table, the null hypothesis is rejected.
+The Kolmogorov-Smirnov (K-S) statistic is one of the most popular goodness-of-fit tests for comparing a sample with a hypothesized parametric distribution. The test is performed as follows. Given a sample of n observations, let $S_{n}(x)$ be the empirical cumulative distribution and $F(x)$ be the population cumulative distribution. The K-S statistic is defined by: \[d = max(\lvert F(x)-S_{n}(x) \rvert)\] The null hypothesis is that the observations are from the specified distribution $F(x)$, and the alternate hypothesis is that the data is not from $F(x)$. The table of critical values for $d$ are given by \citet{Massey} for various sample sizes $n$ and significance levels $a$. If the value of $d$ exceeds the test's corresponding critical value, the null hypothesis is rejected.
 
-However, the test is often misused. The standard one-sample K-S test applies to independent, continuous data with a hypothesized distribution that is completely specified. Often in literature, the test is applied to dependent, discrete, or rounded data, with hypothesized distributions containing estimated parameters. As shown by \citet{Steinskog} and later in this paper, the test is too conservative when the parameters are estimated. Throughout this paper, the cumulative distribution $F(x)$ is standard normal.
+However, the test is often misused. The standard one-sample K-S test applies to independent, continuous data with a hypothesized distribution that is completely specified. Often in literature, it has been "discovered" that the test loses its power when applied to dependent, discrete, or rounded data, with hypothesized distributions containing estimated parameters. For instance in \citet{Steinskog}, the authors demonstrate the change in power when using estimated parameters and stress caution when using the K-S test in such ways. The purpose of this paper is to expand on the misuses of the K-S test and propose solutions in the case that the K-S test would still like to be used.
+
+In order to set up the demonstrations, simulated data is used throughout. Unless otherwise specified, the random data is generated from a standard normal distribution with sample size $100$. Therefore the cumulative distribution $F(x)$ of the K-S test is standard normal.
 
 \hypertarget{sec:fitted}{%
 \section{Fitted Parameters}\label{sec:fitted}}
 
-The K-S test shows significant issues in the case of fitted parameters. As previously mentioned, one assumption of the K-S test is that the hypothesized distribution is completely specified. However, the procedure is sometimes performed where the population cumulative distribution $F(x)$ has parameters $\mu=\Xbar$, the sample mean, and $\sigma^2=s^2$, the sample variance \citep{Lilliefors}. \citet{Lilliefors} also shows that using the standard table when values of the mean and standard deviation are estimated obtains extremely conservative results. 
+The K-S test shows significant issues in the case of fitted parameters. As previously mentioned, one assumption of the K-S test is that the hypothesized distribution is completely specified. However, the procedure is sometimes performed where the population cumulative distribution $F(x)$ has parameters $\mu=\Xbar$, the sample mean, and $\sigma^2=s^2$, the sample variance \citep{Lilliefors}. \citet{Lilliefors} shows that using the standard table when values of the mean and standard deviation are estimated obtains extremely conservative results. \citet{Capasso} concludes that failing to re-estimate the parameters may lead to wrong, overly-conservative approximations to the distributions of goodness-of-fit test statistics based on the empirical distribution function. \citet{Capasso} also notes that the impact of this possible mistake may turn out to be dramatic and does not vanish as the sample size increases. This case is demonstrated in Figure~\ref{fig:hist_fitted} under the Naive plot. The naive K-S test was performed by estimating the parameters of $F(x)$ using the fitted distribution of the sample data. Since the data is generated from a standard normal distribution with seemingly all assumptions met, a uniform distribution of $U(0,1)$ is expected for the p-values. However this is under the assumption that the K-S test holds its power, which it no longer does due to using fitted parameters. Therefore, there is notable deviation from the uniform distribution. 
 
-To resolve this problem, parametric bootstrap can be performed. The parameters of the null distribution are approximated from the bootstrap. Figure~\ref{fig:hist_fitted} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In each parametric test, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated. In the naive case, K-S tests are performed with fitted parameters.
+To resolve this problem, both parametric and non-parametric bootstrap can be performed. Performing bootstrap onto goodness-of-fit tests such as the K-S test is a well-researched topic. \citet{Genest} provides validity for using parametric bootstrap with various goodness-of-fit tests. \citet{Babu} details the bootstrap procedure for goodness-of-fit tests and notes that both parametric and non-parametric procedures lead to correct asymptotic levels, however there is a correction required for the non-parametric case.
+
+The bootstrap procedure is as follows. Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{F}_n$, an estimator of the distribution function $F$ based on the sample $X_1,...,X_n$. Let $\hat{\theta}_n^* = \theta_n(X_1^*,...,X_n^*)$. $\theta$ is the parameter vector, so $\hat{\theta}_n$ represents the sample mean and variance of the sample $X_1,...,X_n$. It follows that $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap sample $X_1^*,...,X_n^*$.
+
+In the parametric case, the resampling is done where $\hat{F}_n = F(.;\hat{\theta}_n)$. Bootstrap samples are drawn from ${F}(.,\hat{\theta}_n)$ where the assumed distribution $F$ is normal and $\hat{\theta}_n = (\Xbar, s)$, the sample mean and sample standard deviation. For each bootstrap sample, a K-S test statistic is found using those fitted parameters
+
+Figure~\ref{fig:hist_fitted} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In both the parametric and non-parametric cases, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated. 
 
 \begin{figure}[tbp]
   \centering
@@ -93,8 +101,6 @@ To resolve this problem, parametric bootstrap can be performed. The parameters o
   \caption{Histograms demonstrating fitted parameters.}
   \label{fig:hist_fitted}
 \end{figure}
-
-Since the data is generated from a standard normal distributions with seemingly all assumptions met, a uniform distribution of $U(0,1)$ is expected for the p-values. The naive histogram shows that when the parameters are estimated there is notable deviation from the uniform distribution. However, through parametric bootstrap of the parameters the p-values appear to retain a uniform distribution.
 
 \hypertarget{sec:correlation}{%
 \section{Problem under Serial Dependence}\label{sec:correlation}}
@@ -113,31 +119,6 @@ The K-S test shows significant issues in the case of serial dependence.
   \includegraphics{hist_copula}
   \caption{Histograms demonstrating copula to correct correlation.}
   \label{fig:hist_copula}
-\end{figure}
-
-\hypertarget{sec:rounded}{%
-\section{Rounded Data}\label{sec:rounded}}
-
-Another assumption of the K-S test is that it applies to continuous data. This can be easily violated by performing a level of rounding on the data. Rounding causes the data to become discrete, and the K-S test can be shown to no longer apply. To demonstrate this, simulations were conducted at varying levels of rounding. A random sample of size $100$ was collected from the standard normal distribution and subsequently rounded to the degrees of $.01$ and  $.1$. This simulation was replicated $1000$ times for each rounding level and the results are shown in Figure~\ref{fig:hist_rounded}.
-
-\begin{figure}[tbp]
-  \centering
-  \includegraphics{hist_rounded}
-  \caption{Histograms of P-values with rounded data.}
-  \label{fig:hist_rounded}
-\end{figure}
-
-As mentioned before, the expected distribution of p-values is $U(0,1)$. For rounding to the hundreths, though the distribution appears uniform it is still not recommended to use the basic K-S test due to ties in the data. The issue is apparent when rounding to the tenths, as the distribution of p-values does not hold a standard uniform distribution and the test no longer applies. This simulation shows that rounding can have a serious impact on the power of the K-S test and should be avoided.
-
-There are some solutions in the case that a discrete distribution is in question. The chi-squared test is another goodness-of-fit test that can be applied to discrete distributions \citep{Massey}. However, the standard K-S test holds various advantages over it. In small samples, \citet{Massey} explains that the chi-squared test loses information and validity due to the grouping performed, while the K-S test treats individual observations separately. \citet{Massey} additionally notes that the K-S test generally appears to be the more powerful test regardless of sample size.
-
-In addition, a proposed revision of the K-S test can be found in \citet{dgof}.\citet{dgof} provides a revision to R's `ks.test()` function for the case that the null distribution is discrete.
-
-\begin{figure}[tbp]
-  \centering
-  \includegraphics{hist_general}
-  \caption{Histograms of P-values with KSGeneral and dgof packages.}
-  \label{fig:hist_general}
 \end{figure}
 
 \hypertarget{sec:conclusion}{%
@@ -160,6 +141,7 @@ Adding these to see the full bibliography:
 \citet{Wang}
 \citet{Capasso}
 \citet{Dimitrova}
+\citet{Genest}
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}
