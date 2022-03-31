@@ -707,6 +707,8 @@ rho <- 0.7
 counter <- 0
 nrep <- 1000
 B <- 100
+shape <- 3
+scale <- 1
 
 # P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_gamma(genData(n, qgamma, shape = 3, scale = 1, copula = normalCopula, rho = rho), "pgamma", B = B))
@@ -728,11 +730,15 @@ hist_copula_gamma <- ggplot(results) +
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
-                   facet_wrap(~histogram, scales = "free_y")
+                   facet_wrap(~histogram, scales = "free_y") +
+                   labs(caption = sprintf("Rho = %s, Shape = %s, Scale = %s", rho, shape, scale))
 
 print(proc.time() - ptm)
 
 hist_copula_gamma
+
+# Save the histogram figure
+ggsave(filename = "hist_copula_gamma.pdf", plot = hist_copula_gamma, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
 ```{r}
@@ -840,6 +846,9 @@ rho <- 0.5
 counter <- 0
 nrep <- 1000
 B <- 100
+loc <- 0
+shape <- 1
+scale <- 1
 
 # P-vals from using bootstrap with copulas
 pvals_copula <- suppressWarnings(replicate(nrep, test_gev(genData(n, qgev, loc = 0, shape = 1, scale = 1, copula = normalCopula, rho = rho), B = B)))
@@ -861,7 +870,8 @@ hist_copula_gev <- ggplot(results) +
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
-                   facet_wrap(~histogram, scales = "free_y")
+                   facet_wrap(~histogram, scales = "free_y") +
+                   labs(caption = sprintf("Rho = %s, Loc = %s, Shape = %s, Scale = %s", rho, loc, shape, scale))
 
 print(proc.time() - ptm)
 
