@@ -10,6 +10,7 @@ library(dgof)
 library(tidyverse)
 library(KSgeneral)
 library(copula)
+library(evd)
 source('tspb.R')
 ```
 
@@ -33,6 +34,8 @@ test_parametric <- function(x, B = 1000) {
     sigma.b <- sd(x.b)
     stat.b[i] <- ks.test(x.b, "pnorm", mu.b, sigma.b)$statistic
   }
+  
+  # Return empirical p-value
   p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
 
   counter <<- counter + 1
@@ -40,6 +43,7 @@ test_parametric <- function(x, B = 1000) {
   list(p.value = p.value)
 }
 
+# Test non-parametric bootstrap as a solution to fitted parameters
 test_babu <- function(x, B = 1000) {
   p.value <- ks.np.babu(x, B = 1000)$p.value
   counter <<- counter + 1
@@ -271,48 +275,50 @@ ks.np.babu <- function(x, B = 1000) {
 
 ```{r}
 test_copula <- function(x, dist, B) {
-    ## example assuming normal distribution; normal copula
-    ## get observed stat
+
+    # Get observed statistic
     n <- length(x)
     mu <- mean(x)
     sigma <- sd(x)
     stat  <- ks.test(x, dist, mean = mu, sd = sigma)$statistic
-    ## get lag-1 sample auto-spearman rho
+    
+    # Get lag-1 sample auto-spearman rho
     rho  <-  cor(x[-1], x[-n], method = "spearman")
     r <- iRho(normalCopula(), rho)
     np <- normalCopula(r)
-    ## parametric bootstrap to get an empirical distribution of stat
+    
+    # Perform parametric bootstrap to get an empirical distribution of stat
     stat.b <- double(n)
-    ## set up containers
+    
     for (i in 1:B) {
-        ## get one bootstrap sample
-        ## 1. the marginal distribution is the fitted dist
-        ## 2. there is temporal dependence
+        # 1. The marginal distribution is the fitted dist
+        # 2. There is temporal dependence
         u <- runif(n) 
         for (j in 2:n) {
-            ## could test other copulas later
             u[j]  <- cCopula(c(u[j-1], u[j]), np, indices = 2, inverse = TRUE)
         }
-        ## get bootstrap sample
+        
+        # Transform bootstrap sample and fit the parameters
         x.b <- qnorm(u, mean = mu, sd = sigma)
-        ## fit it
         mu.b <- mean(x.b)
         sigma.b <- sd(x.b)
+        
+        # Gather bootstrap sample's test statistic
         stat.b[i] <- ks.test(x.b, dist, mean = mu.b, sd = sigma.b)$statistic
     }
     
+    # Return empirical p-value
     p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
     
     counter <<- counter + 1
     cat(counter, "")
     
     return(p.value)
-    # return empirical p-value    
 }
 
-# Naive KS-test
-test_naive_copula <- function(x) {
-  p.value <- ks.test(x, "pnorm")$p.value
+# Super naive KS-test with fitted parameters
+test_super_naive <- function(x) {
+  p.value <- ks.test(x, "pnorm", mean = mean(x), sd = sd(x))$p.value
   list(p.value = p.value)
 }
 
@@ -323,13 +329,15 @@ n <- 100
 ar <- 0.5
 counter <- 0
 nrep <- 1000
-B <- 1000
+B <- 100
 pvals_copula <- replicate(nrep, test_copula(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), "pnorm", B = B))
-pvals_naive <- replicate(nrep, test_naive_copula(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
+counter <- 0
+pvals_parametric <- replicate(nrep, test_parametric(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
+pvals_naive <- replicate(nrep, test_super_naive(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
 
 # Create a master data_frame with all the results
-histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
-p_values <- c(pvals_copula, pvals_naive)
+histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
+p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
@@ -350,23 +358,41 @@ ggsave(filename = "hist_copula.pdf", plot = hist_copula, path = "../Manuscript",
 ## Test AR(2) model
 ptm <- proc.time()
 
-# Generate results
+# Set variables
 n <- 100
 counter <- 0
 nrep <- 1000
 B <- 100
 b1 <- 0.5
 b2 <- 0.3
+
+# P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula(arima.sim(list(order = c(2, 0, 0), 
-                                                           ar = c(b1, b2)), 
+                                                           ar = c(b1, b2)),
+                                                      rand.gen=rnorm,
+                                                      sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)),
+                                                      n = n), 
+                                            "pnorm", 
+                                            B = B))
+counter <- 0
+
+# P-vals from using parametric bootstrap
+pvals_parametric <- replicate(nrep, test_parametric(arima.sim(list(order = c(2, 0, 0), 
+                                                                   ar = c(b1, b2)), 
+                                                              rand.gen=rnorm, 
+                                                              sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)), 
+                                                              n = n))$p.value)
+
+# P-vals from naively using fitted parameters
+pvals_naive <- replicate(nrep, test_super_naive(arima.sim(list(order = c(2, 0, 0), 
+                                                               ar = c(b1, b2)), 
                                                           rand.gen=rnorm, 
                                                           sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)), 
-                                                          n = n), "pnorm", B = B))
-pvals_naive <- replicate(nrep, test_naive_copula(arima.sim(list(order = c(2, 0, 0), ar = c(b1, b2)), rand.gen=rnorm, sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)), n = n))$p.value)
+                                                          n = n))$p.value)
 
 # Create a master data_frame with all the results
-histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
-p_values <- c(pvals_copula, pvals_naive)
+histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
+p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
@@ -381,44 +407,33 @@ print(proc.time() - ptm)
 hist_copula_ar2
 
 # Save the histogram figure
-#ggsave(filename = "hist_copula_ar2.pdf", plot = hist_copula_ar2, path = "../Manuscript", height = 2.1, width = 6)
-```
-
-```{r}
-b1 <- 0.5
-b2 <- 0.3
-n <- 100
-x <- arima.sim(list(order = c(2, 0, 0), ar = c(b1, b2)), rand.gen=rnorm, sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)), n = n)
-sd(x)
-var(x)
-
-ma <- 0.5
-x <- arima.sim(list(ma = 0.5), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n)
-sd(x)
-var(x)
-
-ar <- 0.5
-x <- arima.sim(list(ar = ar, ma = ma), rand.gen = rnorm, sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), n = n)
-sd(x)
-var(x)
+ggsave(filename = "hist_copula_ar2.pdf", plot = hist_copula_ar2, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
 ```{r}
 ## Test MA(1) model
 ptm <- proc.time()
 
-# Generate results
+# Set variables
 n <- 100
 counter <- 0
 nrep <- 1000
 B <- 100
 ma <- 0.5
+
+# P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula(arima.sim(list(ma = 0.5), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n), "pnorm", B = B))
-pvals_naive <- replicate(nrep, test_naive_copula(arima.sim(list(ma = 0.5), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n))$p.value)
+counter <- 0
+
+# P-vals from using parametric bootstrap
+pvals_parametric <- replicate(nrep, test_parametric(arima.sim(list(ma = 0.5), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n))$p.value)
+
+# P-vals from naively using fitted parameters
+pvals_naive <- replicate(nrep, test_super_naive(arima.sim(list(ma = 0.5), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n))$p.value)
 
 # Create a master data_frame with all the results
-histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
-p_values <- c(pvals_copula, pvals_naive)
+histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
+p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
@@ -440,28 +455,40 @@ ggsave(filename = "hist_copula_ma1.pdf", plot = hist_copula_ma1, path = "../Manu
 ## Test ARMA(1,1) model
 ptm <- proc.time()
 
-# Generate results
+# Set variables
 n <- 100
 counter <- 0
 nrep <- 1000
 B <- 100
 ar <- 0.5
 ma <- 0.3
+
+# P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula(arima.sim(list(ar = ar, 
                                                            ma = ma), 
                                                       rand.gen=rnorm, 
                                                       sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
                                                       n = n),
                                             "pnorm", B = B))
-pvals_naive <- replicate(nrep, test_naive_copula(arima.sim(list(ar = ar, 
-                                                                ma = ma), 
+counter <- 0
+
+# P-vals from using parametric bootstrap
+pvals_parametric <- replicate(nrep, test_parametric(arima.sim(list(ar = ar, 
+                                                              ma = ma), 
+                                                      rand.gen=rnorm, 
+                                                      sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
+                                                      n = n))$p.value)
+
+# P-vals from naively using fitted parameters
+pvals_naive <- replicate(nrep, test_super_naive(arima.sim(list(ar = ar, 
+                                                              ma = ma), 
                                                       rand.gen=rnorm, 
                                                       sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
                                                       n = n))$p.value)
 
 # Create a master data_frame with all the results
-histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
-p_values <- c(pvals_copula, pvals_naive)
+histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
+p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
@@ -576,13 +603,11 @@ hist_copula2
 ```
 
 ```{r}
-library(fitdistrplus)
+# Testing bootstrap with copulas for gamma distribution
 test_gamma <- function(x, dist, B = 100, wcopula = normalCopula) {
-  
-    #fit <- fitdist(x, "gamma", method = "mle", lower = c(0, 0), start = list(scale = 1, shape = 1))
-    #shape <- fit$estimate[1]
-    #scale <- fit$estimate[2]
-  
+
+    # Get observed stat
+    n <- length(x)
     m <- mean(x)
     v <- var(x)
     scale <- v/m
@@ -590,44 +615,35 @@ test_gamma <- function(x, dist, B = 100, wcopula = normalCopula) {
     
     stat  <- ks.test(x, dist, shape = shape, scale = scale)$statistic
 
-    ## example assuming normal distribution; normal copula
-    ## get observed stat
-    n <- length(x)
-
-    ## get lag-1 sample auto-spearman rho
+    # Get lag-1 sample auto-spearman rho
     rho  <-  cor(x[-1], x[-n], method = "spearman")
     r <- iRho(wcopula(), rho)
     wcop <- wcopula(r)
-    ## parametric bootstrap to get an empirical distribution of stat
+    
+    # Parametric bootstrap to get an empirical distribution of stat
     stat.b <- double(n)
-    ## set up containers
+    
     for (i in 1:B) {
-        ## get one bootstrap sample
-        ## 1. the marginal distribution is the fitted dist
-        ## 2. there is temporal dependence
+        # 1. The marginal distribution is the fitted dist
+        # 2. There is temporal dependence
         u <- runif(n)
         for (j in 2:n) {
-            ## could test other copulas later
             u[j]  <- cCopula(c(u[j-1], u[j]), wcop, indices = 2, inverse = TRUE)
         }
-        ## get bootstrap sample
-        ## get fitted parameters for the bootstrap sample
         
+        # Transform the bootstrap sample and fit the parameters
         x.b <- qgamma(u, shape = shape, scale = scale)
         
         m.b <- mean(x.b)
         v.b <- var(x.b)
-        
         scale.b <- v.b/m.b
         shape.b <- m.b*m.b/v.b
         
-        #fit.b <- fitdist(x.b, "gamma", method = "mle", lower = c(0, 0), start = list(scale = 1, shape = 1))
-        #shape.b <- fit.b$estimate[1]
-        #scale.b <- fit.b$estimate[2]
-        
+        # Calculate new test statistic
         stat.b[i] <- ks.test(x.b, dist, shape = shape.b, scale = scale.b)$statistic
     }
-    ## return empirical p-value    
+    
+    # Return empirical p-value    
     p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
     
     counter <<- counter + 1
@@ -636,26 +652,75 @@ test_gamma <- function(x, dist, B = 100, wcopula = normalCopula) {
     return(p.value)
 }
 
-# Naive KS-test
-test_naive_copula <- function(x) {
-  p.value <- ks.test(x, "pgamma", shape = 3, scale = 1)$p.value
+# Parametric bootstrap to solve fitted parameters for gamma distribution
+test_parametric_gamma <- function(x, B = 1000) {
+  
+  # Summarize parameters
+  m <- mean(x)
+  v <- var(x)
+  scale <- v/m
+  shape <- m*m/v
+  
+  # Store KS statistic from using fitted parameters
+  stat <- ks.test(x, "pgamma", shape = shape, scale = scale)$statistic
+  
+  # Parametric bootstrap to approximate the null distribution
+  n <- length(x)
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- rgamma(n, shape = shape, scale = scale)
+    
+    m.b <- mean(x.b)
+    v.b <- var(x.b)
+    
+    scale.b <- v.b/m.b
+    shape.b <- m.b*m.b/v.b
+    
+    stat.b[i] <- ks.test(x.b, "pgamma", shape = shape.b, scale = scale.b)$statistic
+  }
+  
+  # Return empirical p-value
+  p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
+
+  counter <<- counter + 1
+  cat(counter, "")
+  list(p.value = p.value)
+}
+
+# Naive function that incorrectly uses fitted parameters for gamma distribution
+test_super_naive_gamma <- function(x) {
+  
+  m <- mean(x)
+  v <- var(x)
+  scale <- v/m
+  shape <- m*m/v
+  
+  p.value <- ks.test(x, "pgamma", shape = shape, scale = scale)$p.value
   list(p.value = p.value)
 }
 
 ptm <- proc.time()
 
-# Generate results
+# Set variables
 n <- 100
-rho <- 0.5
+rho <- 0.7
 counter <- 0
 nrep <- 1000
-B <- 1000
+B <- 100
+
+# P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_gamma(genData(n, qgamma, shape = 3, scale = 1, copula = normalCopula, rho = rho), "pgamma", B = B))
-pvals_naive <- replicate(nrep, test_naive_copula(genData(n, qgamma, shape = 3, scale = 1, copula = normalCopula, rho = rho))$p.value)
+counter <- 0
+
+# P-vals from using parametric bootstrap
+pvals_parametric <- replicate(nrep, test_parametric_gamma(genData(n, qgamma, shape = 3, scale = 1, copula = normalCopula, rho = rho))$p.value)
+
+# P-vals from naively using fitted parameters
+pvals_naive <- replicate(nrep, test_super_naive_gamma(genData(n, qgamma, shape = 3, scale = 1, copula = normalCopula, rho = rho))$p.value)
 
 # Create a master data_frame with all the results
-histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
-p_values <- c(pvals_copula, pvals_naive)
+histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
+p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
 # Generate histograms plot
@@ -671,8 +736,137 @@ hist_copula_gamma
 ```
 
 ```{r}
+# Testing bootstrap with copulas for GEV distribution
+test_gev <- function(x, B = 100, wcopula = normalCopula) {
+  
+    n <- length(x)
+    
+    # Get observed stat
+    fit <- fgev(x, std.err = FALSE)
+    loc <- fit$estimate[1]
+    scale <- fit$estimate[2]
+    shape <- fit$estimate[3]
+    
+    stat  <- ks.test(x, 'pgev', loc = loc, scale = scale, shape = shape)$statistic
+    
+    # Get lag-1 sample auto-spearman rho
+    rho  <-  cor(x[-1], x[-n], method = "spearman")
+    r <- iRho(wcopula(), rho)
+    wcop <- wcopula(r)
+    
+    # Parametric bootstrap to get an empirical distribution of stat
+    stat.b <- double(n)
+
+    for (i in 1:B) {
+        # 1. The marginal distribution is the fitted dist
+        # 2. There is temporal dependence
+        u <- runif(n)
+        for (j in 2:n) {
+            u[j]  <- cCopula(c(u[j-1], u[j]), wcop, indices = 2, inverse = TRUE)
+        }
+
+        # Transform the bootstrap sample and fit the parameters
+        x.b <- qgev(u, loc = loc, scale = scale, shape = shape)
+        
+        fit.b <- fgev(x.b, std.err = FALSE)
+        loc.b <- fit.b$estimate[1]
+        scale.b <- fit.b$estimate[2]
+        shape.b <- fit.b$estimate[3]
+        
+        # Calculate bootstrap test statistic
+        stat.b[i] <- ks.test(x.b, 'pgev', loc = loc.b, scale = scale.b, shape = shape.b)$statistic
+    }
+    
+    # Return empirical p-value    
+    p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
+    
+    counter <<- counter + 1
+    cat(counter, "")
+    
+    return(p.value)
+}
+
+# Parametric bootstrap to solve fitted parameters for GEV distribution
+test_parametric_gev <- function(x, B = 1000) {
+  
+  # Summarize parameters
+  fit <- fgev(x)
+  loc <- fit$estimate[1]
+  scale <- fit$estimate[2]
+  shape <- fit$estimate[3]
+  
+  # Store KS statistic from using fitted parameters
+  stat <- ks.test(x, "pgev", loc = loc, scale = scale, shape = shape)$statistic
+  
+  # Parametric bootstrap to approximate the null distribution
+  n <- length(x)
+  stat.b <- double(B)
+  for (i in 1:B) {
+    x.b <- rgev(n, loc = loc, scale = scale, shape = shape)
+    
+    fit.b <- fgev(x.b)
+    loc.b <- fit.b$estimate[1]
+    scale.b <- fit.b$estimate[2]
+    shape.b <- fit.b$estimate[3]
+    
+    stat.b[i] <- ks.test(x.b, "pgev", shape = shape.b, scale = scale.b)$statistic
+  }
+  
+  # Return empirical p-value
+  p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
+
+  counter <<- counter + 1
+  cat(counter, "")
+  list(p.value = p.value)
+}
+
+# Naive function that incorrectly uses fitted parameters for GEV distribution
+test_super_naive_gev <- function(x) {
+  
+  fit <- fgev(x)
+  loc <- fit$estimate[1]
+  scale <- fit$estimate[2]
+  shape <- fit$estimate[3]
+    
+  p.value <- ks.test(x, "pgev", loc = loc, scale = scale, shape = shape)$p.value
+  list(p.value = p.value)
+}
+
+ptm <- proc.time()
+
+# Set variables
+n <- 100
 rho <- 0.5
-x <- genData(100, qgamma, shape = 3, rate = 2, copula = normalCopula, rho = rho)
-ks.test(x, "pgamma", shape = 3, rate = 2)
+counter <- 0
+nrep <- 1000
+B <- 100
+
+# P-vals from using bootstrap with copulas
+pvals_copula <- suppressWarnings(replicate(nrep, test_gev(genData(n, qgev, loc = 0, shape = 1, scale = 1, copula = normalCopula, rho = rho), B = B)))
+counter <- 0
+
+# P-vals from using parametric bootstrap
+pvals_parametric <- suppressWarnings(replicate(nrep, test_parametric_gamma(genData(n, qgev, shape = 1, scale = 1, copula = normalCopula, rho = rho))$p.value))
+
+# P-vals from naively using fitted parameters
+pvals_naive <- suppressWarnings(replicate(nrep, test_super_naive_gamma(genData(n, qgev, shape = 1, scale = 1, copula = normalCopula, rho = rho))$p.value))
+
+# Create a master data_frame with all the results
+histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
+p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
+results <- data_frame(p_values, histogram)
+
+# Generate histograms plot
+hist_copula_gev <- ggplot(results) + 
+                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
+                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                   theme(legend.position = "none") +
+                   facet_wrap(~histogram, scales = "free_y")
+
+print(proc.time() - ptm)
+
+hist_copula_gev
+
+# Save the histogram figure
+ggsave(filename = "hist_copula_gev.pdf", plot = hist_copula_gev, path = "../Manuscript", height = 2.1, width = 6)
 ```
-}}
