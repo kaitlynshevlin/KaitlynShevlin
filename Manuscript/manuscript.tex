@@ -69,31 +69,88 @@ Department of Statistics, University of Connecticut}
 \doublespace
 
 \begin{abstract}
-The Kolmogorov-Smirnov (KS) test is one the most popular goodness-of-fit tests for comparing a sample with a hypothesized parametric distribution. Nevertheless, it has often been misused. The standard one-sample KS test applies to independent, continuous data with a hypothesized distribution that is completely specified. It is not uncommon, however, to see in the literature that it was applied to dependent, discrete, or rounded data, with hypothesized distributions containing estimated parameters. For example, it has been “discovered” multiple times that the test is too conservative when the parameters are estimated [e.g. \citet{Steinskog}]. This paper aims to survey the misuses of the KS test, demonstrate their consequences through simulation, and provide remedies as needed.
+The Kolmogorov-Smirnov (KS) test is one the most popular goodness-of-fit tests for 
+comparing a sample with a hypothesized parametric distribution. Nevertheless, it has 
+often been misused. The standard one-sample KS test applies to independent, continuous 
+data with a hypothesized distribution that is completely specified. It is not uncommon, 
+however, to see in the literature that it was applied to dependent, discrete, or 
+rounded data, with hypothesized distributions containing estimated parameters. 
+For example, it has been “discovered” multiple times that the test is too conservative 
+when the parameters are estimated [e.g. \citet{Steinskog}]. This paper aims to survey 
+the misuses of the KS test, demonstrate their consequences through simulation, and 
+provide remedies as needed.
 \end{abstract}
 
 
 \hypertarget{sec:intro}{%
 \section{Introduction}\label{sec:intro}}
 
-The Kolmogorov-Smirnov (K-S) statistic is one of the most popular goodness-of-fit tests for comparing a sample with a hypothesized parametric distribution. The test is performed as follows. Given a sample of n observations, let $S_{n}(x)$ be the empirical cumulative distribution and $F(x)$ be the population cumulative distribution. The K-S statistic is defined by: \[d = max(\lvert F(x)-S_{n}(x) \rvert)\] The null hypothesis is that the observations are from the specified distribution $F(x)$, and the alternate hypothesis is that the data is not from $F(x)$. The table of critical values for $d$ are given by \citet{Massey} for various sample sizes $n$ and significance levels $a$. If the value of $d$ exceeds the test's corresponding critical value, the null hypothesis is rejected.
+The Kolmogorov-Smirnov (K-S) statistic is one of the most popular goodness-of-fit 
+tests for comparing a sample with a hypothesized parametric distribution. The test is 
+performed as follows. Given a sample of n observations, let $S_{n}(x)$ be the empirical 
+cumulative distribution and $F(x)$ be the population cumulative distribution. The K-S 
+statistic is defined by: \[d = max(\lvert F(x)-S_{n}(x) \rvert)\] The null hypothesis 
+is that the observations are from the specified distribution $F(x)$, and the 
+alternate hypothesis is that the data is not from $F(x)$. The table of critical 
+values for $d$ are given by \citet{Massey} for various sample sizes $n$ and significance 
+levels $a$. If the value of $d$ exceeds the test's corresponding critical value, 
+the null hypothesis is rejected.
 
-However, the test is often misused. The standard one-sample K-S test applies to independent, continuous data with a hypothesized distribution that is completely specified. Often in literature, it has been "discovered" that the test loses its power when applied to dependent, discrete, or rounded data, with hypothesized distributions containing estimated parameters. For instance in \citet{Steinskog}, the authors demonstrate the change in power when using estimated parameters and stress caution when using the K-S test in such ways. The purpose of this paper is to expand on the misuses of the K-S test and propose solutions in the case that the K-S test would still like to be used.
+However, the test is often misused. The standard one-sample K-S test applies to 
+independent, continuous data with a hypothesized distribution that is completely specified. 
+Often in literature, it has been "discovered" that the test loses its power when 
+applied to dependent or discrete data with hypothesized distributions containing 
+estimated parameters. In the case of estimated parameters, \citet{Steinskog} 
+demonstrates the change in power when using estimated parameters and stress caution in 
+using the K-S test in such ways. \citet{Lilliefors} shows 
+that using the standard table when values of the mean and standard deviation are 
+estimated obtains extremely conservative results. This is supported by \citet{Capasso}, which 
+concludes that failing to re-estimate the parameters may lead to wrong, overly-conservative 
+approximations to the distributions of goodness-of-fit test statistics based on the empirical 
+distribution function. \citet{Capasso} also notes that the impact of this possible mistake 
+may turn out to be dramatic and does not vanish as the sample size increases. Remedies are provided 
+by \citet{Genest} and \citet{Babu} in the form of bootstrap. \citet{Genest} provides validity 
+for using parametric bootstrap with various goodness-of-fit tests. \citet{Babu} details 
+the bootstrap procedure for goodness-of-fit tests and notes that both parametric and 
+non-parametric procedures lead to correct asymptotic levels, however there is a correction 
+required for the non-parametric case. In the case of dependent data, \citet{Durilleul} demonstrates 
+that the K-S statistic is too liberal for medium-to-high positive autocorrelation values. 
+\citet{Durilleul} also shows that for negative autocorrelation values, the behavior is 
+asymmettrical with respect to positive values. For remedies, \citet{Weiss} provides a 
+procedure that is applicable specifically for data modeled by the second-order auto-regressive (AR) process 
+where the parameters are known. \citet{Lanzante} tests various strategies for dealing with temporal dependence
+and concludes that a test based on Monte-Carlo simulations performed the best.
 
-In order to set up the demonstrations, simulated data is used throughout. Unless otherwise specified, the random data is generated from a standard normal distribution with sample size $100$. Therefore the cumulative distribution $F(x)$ of the K-S test is standard normal.
+The purpose of this paper is to expand on the misuses of the K-S test and propose 
+solutions in the case that the K-S test would still like to be used. In order to set 
+up the demonstrations, simulated data is used throughout. Unless otherwise specified, 
+the random data is generated from a standard normal distribution with sample size $n = 100$. 
+Therefore the cumulative distribution $F(x)$ of the K-S test for much of this paper is standard normal.
 
 \hypertarget{sec:fitted}{%
 \section{Fitted Parameters}\label{sec:fitted}}
 
-The K-S test shows significant issues in the case of fitted parameters. As previously mentioned, one assumption of the K-S test is that the hypothesized distribution is completely specified. However, the procedure is sometimes performed where the population cumulative distribution $F(x)$ has parameters $\mu=\Xbar$, the sample mean, and $\sigma^2=s^2$, the sample variance \citep{Lilliefors}. \citet{Lilliefors} shows that using the standard table when values of the mean and standard deviation are estimated obtains extremely conservative results. \citet{Capasso} concludes that failing to re-estimate the parameters may lead to wrong, overly-conservative approximations to the distributions of goodness-of-fit test statistics based on the empirical distribution function. \citet{Capasso} also notes that the impact of this possible mistake may turn out to be dramatic and does not vanish as the sample size increases. This case is demonstrated in Figure~\ref{fig:hist_fitted} under the Naive plot. The naive K-S test was performed by estimating the parameters of $F(x)$ using the fitted distribution of the sample data. Since the data is generated from a standard normal distribution with seemingly all assumptions met, a uniform distribution of $U(0,1)$ is expected for the p-values. However this is under the assumption that the K-S test holds its power, which it no longer does due to using fitted parameters. Therefore, there is notable deviation from the uniform distribution. 
+The K-S test shows significant issues in the case of fitted parameters. One assumption 
+of the K-S test is that the hypothesized distribution is completely specified. 
+However, the procedure is sometimes performed where the population cumulative 
+distribution $F(x)$ has parameters $\mu=\Xbar$, the sample mean, and $\sigma^2=s^2$, 
+the sample variance \citep{Lilliefors}. This case is demonstrated in Figure~\ref{fig:hist_fitted} 
+under the Naive plot. The naive K-S test was performed by estimating the parameters 
+of $F(x)$ using the fitted distribution of the sample data. Since the data is generated 
+from a standard normal distribution with seemingly all assumptions met, a uniform 
+distribution of $U(0,1)$ is expected for the p-values. However this is under the 
+assumption that the K-S test holds its power, which it no longer does due to using 
+fitted parameters. Therefore, there is notable deviation from the uniform distribution. 
 
-To resolve this problem, both parametric and non-parametric bootstrap can be performed. Performing bootstrap onto goodness-of-fit tests such as the K-S test is a well-researched topic. \citet{Genest} provides validity for using parametric bootstrap with various goodness-of-fit tests. \citet{Babu} details the bootstrap procedure for goodness-of-fit tests and notes that both parametric and non-parametric procedures lead to correct asymptotic levels, however there is a correction required for the non-parametric case.
+To resolve this problem, both parametric and non-parametric bootstrap can be performed. 
+Performing bootstrap onto goodness-of-fit tests such as the K-S test is a well-researched 
+topic. 
 
 The bootstrap procedure is as follows. Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{F}_n$, an estimator of the distribution function $F$ based on the sample $X_1,...,X_n$. Let $\hat{\theta}_n^* = \theta_n(X_1^*,...,X_n^*)$. $\theta$ is the parameter vector, so $\hat{\theta}_n$ represents the sample mean and variance of the sample $X_1,...,X_n$. It follows that $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap sample $X_1^*,...,X_n^*$.
 
 In the parametric case, the resampling is done where $\hat{F}_n = F(.;\hat{\theta}_n)$. Bootstrap samples are drawn from ${F}(.,\hat{\theta}_n)$ where the assumed distribution $F$ is normal and $\hat{\theta}_n = (\Xbar, s)$, the sample mean and sample standard deviation. For each bootstrap sample, a K-S test statistic is found using those fitted parameters
 
-Figure~\ref{fig:hist_fitted} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In both the parametric and non-parametric cases, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated. 
+Figure~\ref{fig:hist_fitted} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In both the parametric and non-parametric cases, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated.
 
 \begin{figure}[tbp]
   \centering
@@ -128,20 +185,14 @@ Conclusion here.
 
 Adding these to see the full bibliography: 
 
-\citet{Steinskog}
 \citet{Weiss}
-\citet{Massey}
-\citet{Lilliefors}
 \citet{Arnold}
 \citet{Conover}
 \citet{Gleser}
-\citet{Babu}
 \citet{Butorina}
 \citet{Racine}
 \citet{Wang}
-\citet{Capasso}
 \citet{Dimitrova}
-\citet{Genest}
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}
