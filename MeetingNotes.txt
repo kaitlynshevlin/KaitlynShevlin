@@ -176,3 +176,41 @@ Generate from ar2
 For next time:
 1. Generate from ar2 instead of ar1, see if it works well
 2. Instead of generating from arima.sim, use the 290-294 loop to generate data. Use different copulas.
+https://stats.stackexchange.com/questions/256437/variance-of-a-stationary-ar2-model
+——————————————————————————————————————————————
+3/11
+For next time:
+- Work on manuscript
+	- show that naive approach does not work, maybe cite some that discover this
+- arma(1,1) model test
+- test if gamma works
+- test different copulas
+- potentially real climate data from Steinskog
+——————————————————————————————————————————————
+3/25
+- "Naive" should still perform fix for fitted parameters, but doesn't make fix for correlation
+- Could use two naive methods, one for super naive, another for fitted but parametric
+- Real data from lanzante possibly
+- potentially extreme value distributed data
+- When on serial dependence, split it up
+	- First with known parameters
+	- Then without known parameters where bootstrap must be included
+——————————————————————————————————————————————
+4/1
+Copula is mechanism to form joined distributions, use copula to capture temporal dependence. Nonparametric association.
+- incorporates some temporal dependence
+- Check if marginal distribution is standard normal
+Section 3 also copula, introduce some temporal dependence
+Section 4 is the combination of fitted parameters and dependence
+——————————————————————————————————————————————
+4/8
+Poster:
+Introduction
+Section 2 has fitted parameters
+- Demonstrated and provided solution
+Section 3 has serial dependence
+Section 4 has both problems
+Section 5 is conclusion
+
+https://gist.github.com/Pakillo/4854e5d760351206084f6be8abe476b2
+https://link.springer.com/content/pdf/10.1007/s11222-016-9697-3.pdf
