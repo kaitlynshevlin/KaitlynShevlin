@@ -11,6 +11,7 @@ library(tidyverse)
 library(KSgeneral)
 library(copula)
 library(evd)
+library(ismev)
 source('tspb.R')
 ```
 
@@ -324,15 +325,21 @@ test_super_naive <- function(x) {
 
 ptm <- proc.time()
 
-# Generate results
+# Set variables
 n <- 100
 ar <- 0.5
 counter <- 0
 nrep <- 1000
 B <- 100
+
+# P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), "pnorm", B = B))
 counter <- 0
+
+# P-vals from using parametric bootstrap
 pvals_parametric <- replicate(nrep, test_parametric(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
+
+# P-vals from naively using fitted parameters
 pvals_naive <- replicate(nrep, test_super_naive(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
 
 # Create a master data_frame with all the results
@@ -345,7 +352,8 @@ hist_copula <- ggplot(results) +
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
-                   facet_wrap(~histogram, scales = "free_y")
+                   facet_wrap(~histogram, scales = "free_y") +
+                   labs(caption = sprintf("AR = %s", ar))
 hist_copula
 
 print(proc.time() - ptm)
@@ -362,7 +370,7 @@ ptm <- proc.time()
 n <- 100
 counter <- 0
 nrep <- 1000
-B <- 100
+B <- 1000
 b1 <- 0.5
 b2 <- 0.3
 
@@ -400,7 +408,8 @@ hist_copula_ar2 <- ggplot(results) +
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
-                   facet_wrap(~histogram, scales = "free_y")
+                   facet_wrap(~histogram, scales = "free_y") +
+                   labs(caption = sprintf("AR = (%s, %s)", b1, b2))
 
 print(proc.time() - ptm)
 
@@ -418,7 +427,7 @@ ptm <- proc.time()
 n <- 100
 counter <- 0
 nrep <- 1000
-B <- 100
+B <- 1000
 ma <- 0.5
 
 # P-vals from using bootstrap with copulas
@@ -441,7 +450,8 @@ hist_copula_ma1 <- ggplot(results) +
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
-                   facet_wrap(~histogram, scales = "free_y")
+                   facet_wrap(~histogram, scales = "free_y") +
+                   labs(caption = sprintf("MA = %s", ma))
 
 print(proc.time() - ptm)
 
@@ -459,7 +469,7 @@ ptm <- proc.time()
 n <- 100
 counter <- 0
 nrep <- 1000
-B <- 100
+B <- 1000
 ar <- 0.5
 ma <- 0.3
 
@@ -496,7 +506,8 @@ hist_copula_arma <- ggplot(results) +
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
-                   facet_wrap(~histogram, scales = "free_y")
+                   facet_wrap(~histogram, scales = "free_y") +
+                   labs(caption = sprintf("AR = %s, MA = %s", ar, ma))
 
 print(proc.time() - ptm)
 
@@ -706,7 +717,7 @@ n <- 100
 rho <- 0.7
 counter <- 0
 nrep <- 1000
-B <- 100
+B <- 1000
 shape <- 3
 scale <- 1
 
@@ -748,10 +759,10 @@ test_gev <- function(x, B = 100, wcopula = normalCopula) {
     n <- length(x)
     
     # Get observed stat
-    fit <- fgev(x, std.err = FALSE)
-    loc <- fit$estimate[1]
-    scale <- fit$estimate[2]
-    shape <- fit$estimate[3]
+    fit <- gev.fit(x, show = FALSE)
+    loc <- fit$mle[1]
+    scale <- fit$mle[2]
+    shape <- fit$mle[3]
     
     stat  <- ks.test(x, 'pgev', loc = loc, scale = scale, shape = shape)$statistic
     
@@ -774,10 +785,10 @@ test_gev <- function(x, B = 100, wcopula = normalCopula) {
         # Transform the bootstrap sample and fit the parameters
         x.b <- qgev(u, loc = loc, scale = scale, shape = shape)
         
-        fit.b <- fgev(x.b, std.err = FALSE)
-        loc.b <- fit.b$estimate[1]
-        scale.b <- fit.b$estimate[2]
-        shape.b <- fit.b$estimate[3]
+        fit.b <- gev.fit(x.b, show = FALSE)
+        loc.b <- fit.b$mle[1]
+        scale.b <- fit.b$mle[2]
+        shape.b <- fit.b$mle[3]
         
         # Calculate bootstrap test statistic
         stat.b[i] <- ks.test(x.b, 'pgev', loc = loc.b, scale = scale.b, shape = shape.b)$statistic
@@ -796,10 +807,10 @@ test_gev <- function(x, B = 100, wcopula = normalCopula) {
 test_parametric_gev <- function(x, B = 1000) {
   
   # Summarize parameters
-  fit <- fgev(x)
-  loc <- fit$estimate[1]
-  scale <- fit$estimate[2]
-  shape <- fit$estimate[3]
+  fit <- gev.fit(x, show = FALSE)
+  loc <- fit$mle[1]
+  scale <- fit$mle[2]
+  shape <- fit$mle[3]
   
   # Store KS statistic from using fitted parameters
   stat <- ks.test(x, "pgev", loc = loc, scale = scale, shape = shape)$statistic
@@ -810,10 +821,10 @@ test_parametric_gev <- function(x, B = 1000) {
   for (i in 1:B) {
     x.b <- rgev(n, loc = loc, scale = scale, shape = shape)
     
-    fit.b <- fgev(x.b)
-    loc.b <- fit.b$estimate[1]
-    scale.b <- fit.b$estimate[2]
-    shape.b <- fit.b$estimate[3]
+    fit.b <- gev.fit(x.b, show = FALSE)
+    loc.b <- fit.b$mle[1]
+    scale.b <- fit.b$mle[2]
+    shape.b <- fit.b$mle[3]
     
     stat.b[i] <- ks.test(x.b, "pgev", shape = shape.b, scale = scale.b)$statistic
   }
@@ -829,10 +840,10 @@ test_parametric_gev <- function(x, B = 1000) {
 # Naive function that incorrectly uses fitted parameters for GEV distribution
 test_super_naive_gev <- function(x) {
   
-  fit <- fgev(x)
-  loc <- fit$estimate[1]
-  scale <- fit$estimate[2]
-  shape <- fit$estimate[3]
+  fit <- gev.fit(x, show = FALSE)
+  loc <- fit$mle[1]
+  scale <- fit$mle[2]
+  shape <- fit$mle[3]
     
   p.value <- ks.test(x, "pgev", loc = loc, scale = scale, shape = shape)$p.value
   list(p.value = p.value)
@@ -847,18 +858,18 @@ counter <- 0
 nrep <- 1000
 B <- 100
 loc <- 0
-shape <- 1
+shape <- 0.2
 scale <- 1
 
 # P-vals from using bootstrap with copulas
-pvals_copula <- suppressWarnings(replicate(nrep, test_gev(genData(n, qgev, loc = 0, shape = 1, scale = 1, copula = normalCopula, rho = rho), B = B)))
+pvals_copula <- replicate(nrep, test_gev(genData(n, qgev, loc = 0, shape = shape, scale = 1, copula = normalCopula, rho = rho), B = B))
 counter <- 0
 
 # P-vals from using parametric bootstrap
-pvals_parametric <- suppressWarnings(replicate(nrep, test_parametric_gamma(genData(n, qgev, shape = 1, scale = 1, copula = normalCopula, rho = rho))$p.value))
+pvals_parametric <- suppressWarnings(replicate(nrep, test_parametric_gamma(genData(n, qgev, loc = 0, shape = shape, scale = 1, copula = normalCopula, rho = rho))$p.value))
 
 # P-vals from naively using fitted parameters
-pvals_naive <- suppressWarnings(replicate(nrep, test_super_naive_gamma(genData(n, qgev, shape = 1, scale = 1, copula = normalCopula, rho = rho))$p.value))
+pvals_naive <- replicate(nrep, test_super_naive_gamma(genData(n, qgev, loc = 0, shape = shape, scale = 1, copula = normalCopula, rho = rho))$p.value)
 
 # Create a master data_frame with all the results
 histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
@@ -879,4 +890,41 @@ hist_copula_gev
 
 # Save the histogram figure
 ggsave(filename = "hist_copula_gev.pdf", plot = hist_copula_gev, path = "../Manuscript", height = 2.1, width = 6)
+```
+
+```{r}
+ptm <- proc.time()
+
+# Set variables
+n <- 100
+ar <- 0.5
+counter <- 0
+nrep <- 1
+B <- 100
+
+# P-vals from using bootstrap with copulas
+pvals_copula <- replicate(nrep, test_copula(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), "pnorm", B = B))
+counter <- 0
+
+# P-vals from naively using fitted parameters
+pvals_naive <- replicate(nrep, test_super_naive(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
+
+# Create a master data_frame with all the results
+histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
+p_values <- c(pvals_copula, pvals_naive)
+results <- data_frame(p_values, histogram)
+
+# Generate histograms plot
+hist_copula_only <- ggplot(results) + 
+                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
+                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                   theme(legend.position = "none") +
+                   facet_wrap(~histogram, scales = "free_y") +
+                   labs(caption = sprintf("AR = %s", ar))
+hist_copula_only
+
+print(proc.time() - ptm)
+
+# Save the histogram figure
+ggsave(filename = "hist_copula_only.pdf", plot = hist_copula_only, path = "../Manuscript", height = 2.1, width = 6)
 ```
