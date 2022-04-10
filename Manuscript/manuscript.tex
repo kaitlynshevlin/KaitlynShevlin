@@ -143,14 +143,19 @@ assumption that the K-S test holds its power, which it no longer does due to usi
 fitted parameters. Therefore, there is notable deviation from the uniform distribution. 
 
 To resolve this problem, both parametric and non-parametric bootstrap can be performed. 
-Performing bootstrap onto goodness-of-fit tests such as the K-S test is a well-researched 
-topic. 
+The bootstrap procedure is as follows. Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{S}_n$, an estimator of the distribution function $S_n$ based on the sample $X_1,...,X_n$. Let $\hat{\theta}_n^* = \theta_n(X_1^*,...,X_n^*)$. $\theta$ is the parameter vector, so $\hat{\theta}_n$ represents the sample mean and variance of the sample $X_1,...,X_n$. It follows that $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap sample $X_1^*,...,X_n^*$. Thus, the K-S statistic for each bootstrap case is \[max(\lvert F(x)-S^*_n(x) \rvert)\]
 
-The bootstrap procedure is as follows. Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{F}_n$, an estimator of the distribution function $F$ based on the sample $X_1,...,X_n$. Let $\hat{\theta}_n^* = \theta_n(X_1^*,...,X_n^*)$. $\theta$ is the parameter vector, so $\hat{\theta}_n$ represents the sample mean and variance of the sample $X_1,...,X_n$. It follows that $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap sample $X_1^*,...,X_n^*$.
+In parametric bootstrap, the resampling is done where $\hat{S}_n = F(.;\hat{\theta}_n)$. Bootstrap samples are drawn from ${F}(.,\hat{\theta}_n)$ where the assumed distribution $F$ is normal and $\hat{\theta}_n = (\Xbar, s)$, the sample mean and sample standard deviation. For each bootstrap sample, a K-S test statistic is found using those fitted parameters
 
-In the parametric case, the resampling is done where $\hat{F}_n = F(.;\hat{\theta}_n)$. Bootstrap samples are drawn from ${F}(.,\hat{\theta}_n)$ where the assumed distribution $F$ is normal and $\hat{\theta}_n = (\Xbar, s)$, the sample mean and sample standard deviation. For each bootstrap sample, a K-S test statistic is found using those fitted parameters
+In non-parametric bootstrap, the resampling is done where $\hat{S}_n = S_n$.
 
-Figure~\ref{fig:hist_fitted} displays the results of $1000$ replicate tests using the standard normal distribution with sample size $n=100$. In both the parametric and non-parametric cases, $1000$ bootstrap samples are obtained and the corresponding p-value of the K-S test is calculated.
+Figure~\ref{fig:hist_fitted} displays the results of from our simulations. The procedure 
+is replicated $1000$ times using the standard normal distribution with sample size $n=100$. 
+In each replicate test, $1000$ bootstrap samples are obtained. The p-value can be calculated
+by counting the number of bootstrap K-S statistics greater than or equal to the observed K-S statistic, 
+and then dividing by the number of bootstrap samples. It is clear from the figure that both
+bootstrap processes correct for the problem of fitted parameters. The plots appear to be
+$U(0,1)$, which is expected of a full power test.
 
 \begin{figure}[tbp]
   \centering
@@ -162,7 +167,12 @@ Figure~\ref{fig:hist_fitted} displays the results of $1000$ replicate tests usin
 \hypertarget{sec:correlation}{%
 \section{Problem under Serial Dependence}\label{sec:correlation}}
 
-The K-S test shows significant issues in the case of serial dependence.
+The K-S test also displays issues in the case of dependence. An assumption of the 
+test is that the data is independent. Unfortunately, real data is often temporally
+or spatially dependent and the results of a goodness-of-fit test would be valuable. 
+When the K-S test is performed on dependent data, it performs poorly. This is demonstrated
+with a simulation in Figure~\ref{fig:hist_correlation}. Data is generated from a
+first-order autoregressive model.
 
 \begin{figure}[tbp]
   \centering
