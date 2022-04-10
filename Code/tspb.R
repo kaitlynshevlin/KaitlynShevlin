@@ -59,7 +59,7 @@ genData <- function(n, qdist, ..., copula, rho) {
 n <- 10000
 rho  <- 0.5
 ## gamma distribution with clayton copula for serial dependence
-x <- genData(n, qamma, shape = 2, scale = 4, copula = claytonCopula, rho = rho)
+x <- genData(n, qgamma, shape = 2, scale = 4, copula = claytonCopula, rho = rho)
 cor(x[-1], x[-n], method = "spearman")
 ## normal distribution with gumbel copula for searial dependence
 x <- genData(n, qnorm, mean = 2, sd = 2, copula = claytonCopula, rho = rho)
