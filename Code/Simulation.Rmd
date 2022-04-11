@@ -5,10 +5,8 @@ output: html_notebook
 
 ```{r}
 # Load packages
-library(xtable)
 library(dgof)
 library(tidyverse)
-library(KSgeneral)
 library(copula)
 library(evd)
 library(ismev)
@@ -81,113 +79,6 @@ hist_fitted <- ggplot(results) +
 
 # Save the histogram figure
 ggsave(filename = "hist_fitted.pdf", plot = hist_fitted, path = "../Manuscript", height = 2.1, width = 6)
-```
-
-```{r hist_rounded}
-# Test to show that rounding changes the power of the test
-test_rounded <- function(n_tests, n_samples, digits) {
-  
-  p_values <- double(n_tests)
-  
-  for(i in 1:n_tests) {
-    
-    # Generate random rounded data, perform a KS-test, and store the p-value
-    data <- round(rnorm(n_samples), digits)
-    p_values[i] <- ks.test(data, "pnorm")$p.value
-  }
-  
-  return(p_values)
-}
-
-# Create the histograms displaying p-values from each test
-n_tests <- 1000
-n <- 100
-hist1 <- suppressWarnings(test_rounded(n_tests, n, 2))
-hist2 <- suppressWarnings(test_rounded(n_tests, n, 1))
-
-# Create a master data_frame with all the results
-histogram <- c(rep(".01", n_tests), rep(".1", n_tests))
-p_values <- c(hist1, hist2)
-results <- data_frame(p_values, histogram)
-
-# Generate histograms plot
-hist_rounded <- ggplot(results) + 
-                geom_histogram(aes(x = p_values, fill = histogram), binwidth = 1/20, boundary = 0) + 
-                facet_grid(~histogram) +
-                theme(legend.position = "none") +
-                scale_x_continuous(name = "p-value", breaks = seq(0, 1))
-
-# Save the histogram figure
-ggsave(filename = "hist_rounded.pdf", plot = hist_rounded, path = "../Manuscript", height = 2.1, width = 6)
-
-qqplot(hist2, runif(100), xlab = "Rounded", ylab = "Uniform", main = "Testing qqplot")
-abline(0, 1)
-p <- ggplot(results, aes(sample = p_values))
-p + stat_qq(distribution = stats::qunif) + geom_abline(intercept = 0, slope = 1) + xlim(0, 1) + ylim(0, 1)
-```
-
-```{r hist_general}
-# Test the KSgeneral package as a solution to rounded data
-test_general <- function(n_tests, n_samples, digits, B) {
-
-  results1 <- double(n_tests)
-  results2 <- double(n_tests)
-  results3 <- double(n_tests)
-  results4 <- double(n_tests)
-
-  # Create the rounded normal step function
-  left <- -4-0.1^digits
-  y <- pnorm(seq(left, 4, by = 0.1^digits))
-  sfun  <- stepfun(seq(-4, 4, by = 0.1^digits), y)
-  
-  for (i in 1:n_tests) {
-    cat(i, "")
-    # Generate random rounded data, perform 3 KS-tests, and store the p-values
-    # 1. Using the rounded normal step function
-    # 2. Using the naive continuous standard normal function
-    data <- round(rnorm(n_samples), digits)
-    results1[i] <- KSgeneral::disc_ks_test(data, sfun, exact = TRUE)$p.value
-    results2[i] <- dgof::ks.test(data, sfun, exact = TRUE)$p.value
-    results3[i] <- ks.test(data, sfun, simulate.p.value = TRUE, B = B)$p.value
-    results4[i] <- ks.test(data, "pnorm")$p.value
-  }
-  
-  # Create a master data_frame for p-values
-  test <- c(rep("KSgeneral", n_tests), rep("dgof", n_tests), rep("dgofsim", n_tests), rep("Naive", n_tests))
-  digits <- c(rep(.1^digits, 4*n_tests))
-  p_values <- c(results1, results2, results3, results4)
-  results <- data_frame(p_values, test, digits)
-  
-  return(results)
-}
-
-ptm <- proc.time()
-
-n_tests = 100
-n = 30
-B = 1000
-
-# Create the histograms displaying p-values from each test
-test1 <- suppressWarnings(test_general(n_tests, n, digits = 2, B = B))
-test2 <- suppressWarnings(test_general(n_tests, n, digits = 1, B = B))
-results <- rbind(test1, test2)
-
-# Generate histograms plot
-hist_general <- ggplot(results) + 
-                geom_histogram(aes(x = p_values, fill = test), boundary = 0, binwidth = 1/20) + 
-                scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
-                facet_grid(test~digits) +
-                theme(legend.position = "none")
-
-# Save the histogram figure
-ggsave(filename = "hist_general.pdf", plot = hist_general, path = "../Manuscript", height = 4.2, width = 6)
-
-proc.time() - ptm
-
-qqplot(test1$p_values[1:100], runif(100), xlab = "KSGeneral", ylab = "Uniform", main = "Testing qqplot")
-abline(0, 1)
-# could try qqplot for unit interval
-# is qqplot close to 45 degree line, otherwise no
 ```
 
 ```{r hist_correlation}
@@ -895,11 +786,17 @@ ggsave(filename = "hist_copula_gev.pdf", plot = hist_copula_gev, path = "../Manu
 ```{r}
 ptm <- proc.time()
 
+# Super naive KS-test with fitted parameters
+test_super_duper_naive <- function(x) {
+  p.value <- ks.test(x, "pnorm", mean = 0, sd = 1)$p.value
+  list(p.value = p.value)
+}
+
 # Set variables
 n <- 100
 ar <- 0.5
 counter <- 0
-nrep <- 1
+nrep <- 1000
 B <- 100
 
 # P-vals from using bootstrap with copulas
@@ -907,7 +804,7 @@ pvals_copula <- replicate(nrep, test_copula(arima.sim(list(ar = ar), rand.gen=rn
 counter <- 0
 
 # P-vals from naively using fitted parameters
-pvals_naive <- replicate(nrep, test_super_naive(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
+pvals_naive <- replicate(nrep, test_super_duper_naive(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n))$p.value)
 
 # Create a master data_frame with all the results
 histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
