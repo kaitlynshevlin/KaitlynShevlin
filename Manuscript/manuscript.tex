@@ -69,16 +69,15 @@ Department of Statistics, University of Connecticut}
 \doublespace
 
 \begin{abstract}
-The Kolmogorov-Smirnov (KS) test is one the most popular goodness-of-fit tests for 
+The Kolmogorov-Smirnov (K-S) test is one the most popular goodness-of-fit tests for 
 comparing a sample with a hypothesized parametric distribution. Nevertheless, it has 
 often been misused. The standard one-sample KS test applies to independent, continuous 
 data with a hypothesized distribution that is completely specified. It is not uncommon, 
 however, to see in the literature that it was applied to dependent, discrete, or 
 rounded data, with hypothesized distributions containing estimated parameters. 
 For example, it has been “discovered” multiple times that the test is too conservative 
-when the parameters are estimated [e.g. \citet{Steinskog}]. This paper aims to survey 
-the misuses of the KS test, demonstrate their consequences through simulation, and 
-provide remedies as needed.
+when the parameters are estimated. This paper aims to survey the misuses of the KS test, 
+demonstrate their consequences through simulation, and provide remedies as needed.
 \end{abstract}
 
 
@@ -120,6 +119,7 @@ asymmettrical with respect to positive values. For remedies, \citet{Weiss} provi
 procedure that is applicable specifically for data modeled by the second-order auto-regressive (AR) process 
 where the parameters are known. \citet{Lanzante} tests various strategies for dealing with temporal dependence
 and concludes that a test based on Monte-Carlo simulations performed the best.
+We propose a procedure involving copulas to account for dependence.
 
 The purpose of this paper is to expand on the misuses of the K-S test and propose 
 solutions in the case that the K-S test would still like to be used. In order to set 
@@ -143,9 +143,27 @@ assumption that the K-S test holds its power, which it no longer does due to usi
 fitted parameters. Therefore, there is notable deviation from the uniform distribution. 
 
 To resolve this problem, both parametric and non-parametric bootstrap can be performed. 
-The bootstrap procedure is as follows. Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{S}_n$, an estimator of the distribution function $S_n$ based on the sample $X_1,...,X_n$. Let $\hat{\theta}_n^* = \theta_n(X_1^*,...,X_n^*)$. $\theta$ is the parameter vector, so $\hat{\theta}_n$ represents the sample mean and variance of the sample $X_1,...,X_n$. It follows that $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap sample $X_1^*,...,X_n^*$. Thus, the K-S statistic for each bootstrap case is \[max(\lvert F(x)-S^*_n(x) \rvert)\]
+The bootstrap procedure is as follows. 
 
-In parametric bootstrap, the resampling is done where $\hat{S}_n = F(.;\hat{\theta}_n)$. Bootstrap samples are drawn from ${F}(.,\hat{\theta}_n)$ where the assumed distribution $F$ is normal and $\hat{\theta}_n = (\Xbar, s)$, the sample mean and sample standard deviation. For each bootstrap sample, a K-S test statistic is found using those fitted parameters
+\begin{itemize}
+  \item 
+    Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{S}_n$, an estimator 
+    of the distribution function $S_n$ based on the sample $X_1,...,X_n$
+  \item 
+    Let $\hat{\theta}_n^* = \theta_n(X_1^*,...,X_n^*)$, where $\theta$ is the 
+    parameter vector and $\hat{\theta}_n$ represents the sample mean and variance 
+    of the sample $X_1,...,X_n$
+  \item 
+    $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap 
+    sample $X_1^*,...,X_n^*$
+  \item Thus, the K-S statistic for each bootstrap case is $max(\lvert F(x)-S^*_n(x) \rvert)$
+\end{itemize}
+
+In parametric bootstrap, the resampling is done where $\hat{S}_n = F(.;\hat{\theta}_n)$. 
+Bootstrap samples are drawn from ${F}(.,\hat{\theta}_n)$ where the assumed distribution 
+$F$ is normal and $\hat{\theta}_n = (\Xbar, s)$, the sample mean and sample standard 
+deviation. For each bootstrap sample, a K-S test statistic is found using those 
+fitted parameters.
 
 In non-parametric bootstrap, the resampling is done where $\hat{S}_n = S_n$.
 
@@ -164,15 +182,18 @@ $U(0,1)$, which is expected of a full power test.
   \label{fig:hist_fitted}
 \end{figure}
 
-\hypertarget{sec:correlation}{%
-\section{Problem under Serial Dependence}\label{sec:correlation}}
+\hypertarget{sec:dependence}{%
+\section{Problem under Serial Dependence}\label{sec:dependence}}
 
-The K-S test also displays issues in the case of dependence. An assumption of the 
+The K-S test also displays issues in the case of dependence. As mentioned, an assumption of the 
 test is that the data is independent. Unfortunately, real data is often temporally
 or spatially dependent and the results of a goodness-of-fit test would be valuable. 
-When the K-S test is performed on dependent data, it performs poorly. This is demonstrated
+When the K-S test is performed on dependent data it performs poorly. This is demonstrated
 with a simulation in Figure~\ref{fig:hist_correlation}. Data is generated from a
-first-order autoregressive model.
+first-order autoregressive model (AR(1)) with a standard normal distribution. The simulation
+is done with the levels of $\psi$ varying from $(-3,3)$. The results support \citet{Durilleul}'s 
+assertion that the K-S statistic is too liberal for positive autocorrelation values, and 
+that the behavior is asymmettrical for negative values.
 
 \begin{figure}[tbp]
   \centering
@@ -181,11 +202,71 @@ first-order autoregressive model.
   \label{fig:hist_correlation}
 \end{figure}
 
+In order to correct this, we can employ copulas. A copula is a mechanism to form 
+joined distributions. It allows us to incorporate temporal dependence while ensuring that our
+marginal distribution is the same as the fitted distribution. The procedure is as follows:
+
+\begin{enumerate}
+  \item Calculate the observed K-S statistic
+  \item Get the lag-1 sample auto-spearman rho
+  \item Perform parametric bootstrap to get an empirical distribution of the K-S statistic
+\end{enumerate}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula_only}
+  \caption{Histograms demonstrating copula use to correct dependence.}
+  \label{fig:hist_copula_only}
+\end{figure}
+
+Figure~\ref{fig:hist_copula_only} displays the results of the copula remedy for dependent data.
+The data is generated from an AR(1) model with $\psi = .5$. The copula used is to model
+dependence is the normal copula. $1000$ replicate tests were performed with $1000$ bootstrap samples per test.
+The naive test is performed by simply using the K-S test without correcting for any 
+potential dependence.
+
+\hypertarget{sec:fittedwithdependence}{%
+\section{Fitted with Dependence}\label{sec:fittedwithdependence}}
+
+The remedy using copulas is effective in the case where both assumptions are violated.
+This is shown in Figure~\ref{fig:hist_copula}. The "super naive" plot is the resulting 
+p-values when you naively use fitted parameters while ignoring dependence in the data.
+The "naive parametric" plot is the result of applying parametric bootstrap to correct
+for fitted parameters, as done in section \ref{fitted}. Of course, the "copula" plot 
+applies the fix for both assumptions.
+
 \begin{figure}[tbp]
   \centering
   \includegraphics{hist_copula}
-  \caption{Histograms demonstrating copula to correct correlation.}
+  \caption{Histograms demonstrating copula use to correct fitted parameters and dependence.}
   \label{fig:hist_copula}
+\end{figure}
+
+We would also like to show that copulas work for more than a simple AR(1) model. 
+Figure~\ref{fig:hist_copula_ma1} is the procedure performed on data generated from 
+an MA(1) model with $\theta = 0.5$. Figure~\ref{fig:hist_copula_arma} is the procedure 
+performed on data generated from an ARMA(1,1) model with $\psi = 0.5$ and $\theta = 0.3$. 
+It is also possible to apply our procedure to other distributions. The data in Figure~\ref{fig:hist_copula_gamma} is generated from $Gamma ~ (3,1)$ with $\rho = 0.5$.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula_ma1}
+  \caption{Histograms demonstrating remedy use with MA(1) model.}
+  \label{fig:hist_copula_ma1}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula_arma}
+  \caption{Histograms demonstrating remedy use with ARMA(1,1) model.}
+  \label{fig:hist_copula_arma}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula_gamma}
+  \caption{Histograms demonstrating remedy with Gamma(3,1).}
+  \label{fig:hist_copula_gamma}
 \end{figure}
 
 \hypertarget{sec:conclusion}{%
@@ -193,16 +274,9 @@ first-order autoregressive model.
 
 Conclusion here.
 
-Adding these to see the full bibliography: 
-
-\citet{Weiss}
-\citet{Arnold}
-\citet{Conover}
-\citet{Gleser}
 \citet{Butorina}
 \citet{Racine}
 \citet{Wang}
-\citet{Dimitrova}
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}
