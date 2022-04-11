@@ -56,7 +56,10 @@
 }
 \makeatother
 
-\title{Survey of Misuses of the Kolmogorov–Smirnov-Test}
+
+\newcommand{\jy}[1]{\textcolor{blue}{JY: #1}}
+
+\title{On Misuses of the Kolmogorov–Smirnov-Test}
 
 \author{Anthony Zeimbekakis and Jun Yan\\
 \href{mailto:anthony.zeimbekakis@uconn.edu}{\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
@@ -76,8 +79,9 @@ data with a hypothesized distribution that is completely specified. It is not un
 however, to see in the literature that it was applied to dependent, discrete, or 
 rounded data, with hypothesized distributions containing estimated parameters. 
 For example, it has been “discovered” multiple times that the test is too conservative 
-when the parameters are estimated. This paper aims to survey the misuses of the KS test, 
-demonstrate their consequences through simulation, and provide remedies as needed.
+when the parameters are estimated \citep[e.g.,][]{Steinskog}. This paper aims to survey 
+the misuses of the KS test, demonstrate their consequences through simulation, and 
+provide remedies as needed.
 \end{abstract}
 
 
@@ -88,12 +92,18 @@ The Kolmogorov-Smirnov (K-S) statistic is one of the most popular goodness-of-fi
 tests for comparing a sample with a hypothesized parametric distribution. The test is 
 performed as follows. Given a sample of n observations, let $S_{n}(x)$ be the empirical 
 cumulative distribution and $F(x)$ be the population cumulative distribution. The K-S 
-statistic is defined by: \[d = max(\lvert F(x)-S_{n}(x) \rvert)\] The null hypothesis 
+statistic is defined by:
+\[
+  d = \max(\lvert F(x)-S_{n}(x) \rvert).
+\]
+\jy{equations are part of sentences and should be punctuated.}
+The null hypothesis 
 is that the observations are from the specified distribution $F(x)$, and the 
 alternate hypothesis is that the data is not from $F(x)$. The table of critical 
 values for $d$ are given by \citet{Massey} for various sample sizes $n$ and significance 
 levels $a$. If the value of $d$ exceeds the test's corresponding critical value, 
 the null hypothesis is rejected.
+
 
 However, the test is often misused. The standard one-sample K-S test applies to 
 independent, continuous data with a hypothesized distribution that is completely specified. 
@@ -156,7 +166,7 @@ The bootstrap procedure is as follows.
   \item 
     $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap 
     sample $X_1^*,...,X_n^*$
-  \item Thus, the K-S statistic for each bootstrap case is $max(\lvert F(x)-S^*_n(x) \rvert)$
+  \item Thus, the K-S statistic for each bootstrap case is $\max(\lvert F(x)-S^*_n(x) \rvert)$
 \end{itemize}
 
 In parametric bootstrap, the resampling is done where $\hat{S}_n = F(.;\hat{\theta}_n)$. 
