@@ -56,6 +56,9 @@
 }
 \makeatother
 
+
+\newcommand{\jy}[1]{\textcolor{blue}{JY: #1}}
+
 \title{On Misuses of the Kolmogorov–Smirnov-Test}
 
 \author{Anthony Zeimbekakis and Jun Yan\\
@@ -76,8 +79,9 @@ data with a hypothesized distribution that is completely specified. It is not un
 however, to see in the literature that it was applied to dependent, discrete, or 
 rounded data, with hypothesized distributions containing estimated parameters. 
 For example, it has been “discovered” multiple times that the test is too conservative 
-when the parameters are estimated. This paper aims to discuss misuses of the KS test, 
-demonstrate their consequences through simulation, and provide remedies as needed.
+when the parameters are estimated \citep[e.g.,][]{Steinskog}. This paper aims to survey 
+the misuses of the KS test, demonstrate their consequences through simulation, and 
+provide remedies as needed.
 \end{abstract}
 
 
@@ -89,8 +93,11 @@ tests for comparing a sample with a hypothesized parametric distribution. The te
 performed as follows. Let $X_1, ..., X_n$ be i.i.d. random variables from $F_{n}(x)$,
 the empirical cumulative distribution.
 Let $F(x)$ be the population cumulative distribution. The K-S 
-statistic is \[d = \max\lvert F_{n}(x) - F(x) \rvert\]. The null hypothesis 
-is that the observations $X_1, ..., X_n$ are from the specified distribution $F(x)$, and the 
+statistic is 
+\[
+  d = \max{\lvert F_{n}(x) - F(x) \rvert}.
+\].
+The null hypothesis is that the observations $X_1, ..., X_n$ are from the specified distribution $F(x)$, and the 
 alternate hypothesis is that the data is not from $F(x)$. The table of critical 
 values for $d$ are given by \citet{Massey} for various sample sizes $n$ and significance 
 levels $a$. If the value of $d$ exceeds the test's corresponding critical value, 
@@ -117,7 +124,9 @@ required for the non-parametric case. In the case of dependent data, \citet{Duri
 that the K-S statistic is too liberal for medium-to-high positive autocorrelation values. 
 \citet{Durilleul} also shows that for negative autocorrelation values, the behavior is 
 asymmettrical with respect to positive values. For remedies, \citet{Weiss} provides a 
-procedure that is applicable specifically for data modeled by the second-order auto-regressive (AR) process where the parameters are known. \citet{Lanzante} tests various strategies for dealing with temporal dependenceand concludes that a test based on Monte-Carlo simulations performed the best.
+procedure that is applicable specifically for data modeled by the second-order auto-regressive (AR) 
+process where the parameters are known. \citet{Lanzante} tests various strategies for dealing with 
+temporal dependenceand concludes that a test based on Monte-Carlo simulations performed the best.
 We propose a bootstrap procedure involving copulas to account for dependence.
 
 The purpose of this paper is to expand on the misuses of the K-S test and propose 
@@ -155,7 +164,7 @@ The bootstrap procedure is as follows.
   \item 
     $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap 
     sample $X_1^*,...,X_n^*$
-  \item Thus, the K-S statistic for each bootstrap case is $max(\lvert F(x)-F^*_n(x) \rvert)$
+  \item Thus, the K-S statistic for each bootstrap case is $\max(\lvert F(x)-F^*_n(x) \rvert)$
 \end{itemize}
 
 In parametric bootstrap, the resampling is done where $\hat{F}_n = F(.;\hat{\theta}_n)$. 
