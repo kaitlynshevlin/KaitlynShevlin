@@ -214,3 +214,19 @@ Section 5 is conclusion
 
 https://gist.github.com/Pakillo/4854e5d760351206084f6be8abe476b2
 https://link.springer.com/content/pdf/10.1007/s11222-016-9697-3.pdf
+——————————————————————————————————————————————
+4/10
+Write out X1 to Xn
+
+Cannot completely fix this, just trying to get a working dependence. Regardless of true dependence, lets use AR(1). If AR(1) is close approximation to the truth, it can work. Not a complete fix.
+
+Null is that Xi follows cdf F
+KS test is designed when F is completely known. But in practice, more likely used for family with unknown parameters. Null in section 2 is that Xi follows F(theta)
+
+Section 3, Xi marginally follows cdf F, but not independent so null is wrong. Have to correct. No unknown parameters with standard normal. Some unknown dependence there
+
+Section 4, Xi follows F(theta), theta unknown and data dependent. 
+
+Section 5, for thesis, conclude. For paper, include real data.
+
+Include all figures. Lanzante page numbers
