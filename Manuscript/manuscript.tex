@@ -56,12 +56,12 @@
 }
 \makeatother
 
-\title{Survey of Misuses of the Kolmogorov–Smirnov-Test}
+\title{On Misuses of the Kolmogorov–Smirnov-Test}
 
 \author{Anthony Zeimbekakis and Jun Yan\\
 \href{mailto:anthony.zeimbekakis@uconn.edu}{\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
 Department of Statistics, University of Connecticut}
-\date{January 23, 2021}
+\date{April 21, 2022}
 
 \begin{document}
 \maketitle
@@ -76,7 +76,7 @@ data with a hypothesized distribution that is completely specified. It is not un
 however, to see in the literature that it was applied to dependent, discrete, or 
 rounded data, with hypothesized distributions containing estimated parameters. 
 For example, it has been “discovered” multiple times that the test is too conservative 
-when the parameters are estimated. This paper aims to survey the misuses of the KS test, 
+when the parameters are estimated. This paper aims to discuss misuses of the KS test, 
 demonstrate their consequences through simulation, and provide remedies as needed.
 \end{abstract}
 
@@ -86,10 +86,11 @@ demonstrate their consequences through simulation, and provide remedies as neede
 
 The Kolmogorov-Smirnov (K-S) statistic is one of the most popular goodness-of-fit 
 tests for comparing a sample with a hypothesized parametric distribution. The test is 
-performed as follows. Given a sample of n observations, let $S_{n}(x)$ be the empirical 
-cumulative distribution and $F(x)$ be the population cumulative distribution. The K-S 
-statistic is defined by: \[d = max(\lvert F(x)-S_{n}(x) \rvert)\] The null hypothesis 
-is that the observations are from the specified distribution $F(x)$, and the 
+performed as follows. Let $X_1, ..., X_n$ be i.i.d. random variables from $F_{n}(x)$,
+the empirical cumulative distribution.
+Let $F(x)$ be the population cumulative distribution. The K-S 
+statistic is \[d = \max\lvert F_{n}(x) - F(x) \rvert\]. The null hypothesis 
+is that the observations $X_1, ..., X_n$ are from the specified distribution $F(x)$, and the 
 alternate hypothesis is that the data is not from $F(x)$. The table of critical 
 values for $d$ are given by \citet{Massey} for various sample sizes $n$ and significance 
 levels $a$. If the value of $d$ exceeds the test's corresponding critical value, 
@@ -112,14 +113,12 @@ by \citet{Genest} and \citet{Babu} in the form of bootstrap. \citet{Genest} prov
 for using parametric bootstrap with various goodness-of-fit tests. \citet{Babu} details 
 the bootstrap procedure for goodness-of-fit tests and notes that both parametric and 
 non-parametric procedures lead to correct asymptotic levels, however there is a correction 
-required for the non-parametric case. In the case of dependent data, \citet{Durilleul} demonstrates 
+required for the non-parametric case. In the case of dependent data, \citet{Durilleul} demonstrates
 that the K-S statistic is too liberal for medium-to-high positive autocorrelation values. 
 \citet{Durilleul} also shows that for negative autocorrelation values, the behavior is 
 asymmettrical with respect to positive values. For remedies, \citet{Weiss} provides a 
-procedure that is applicable specifically for data modeled by the second-order auto-regressive (AR) process 
-where the parameters are known. \citet{Lanzante} tests various strategies for dealing with temporal dependence
-and concludes that a test based on Monte-Carlo simulations performed the best.
-We propose a procedure involving copulas to account for dependence.
+procedure that is applicable specifically for data modeled by the second-order auto-regressive (AR) process where the parameters are known. \citet{Lanzante} tests various strategies for dealing with temporal dependenceand concludes that a test based on Monte-Carlo simulations performed the best.
+We propose a bootstrap procedure involving copulas to account for dependence.
 
 The purpose of this paper is to expand on the misuses of the K-S test and propose 
 solutions in the case that the K-S test would still like to be used. In order to set 
@@ -147,8 +146,8 @@ The bootstrap procedure is as follows.
 
 \begin{itemize}
   \item 
-    Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{S}_n$, an estimator 
-    of the distribution function $S_n$ based on the sample $X_1,...,X_n$
+    Let $X_1^*,...,X_n^*$ be i.i.d random variables from $\hat{F}_n$, an estimator 
+    of the distribution function $F_n$ based on the sample $X_1,...,X_n$
   \item 
     Let $\hat{\theta}_n^* = \theta_n(X_1^*,...,X_n^*)$, where $\theta$ is the 
     parameter vector and $\hat{\theta}_n$ represents the sample mean and variance 
@@ -156,16 +155,20 @@ The bootstrap procedure is as follows.
   \item 
     $\hat{\theta}_n^*$ represents the sample mean and variance of the bootstrap 
     sample $X_1^*,...,X_n^*$
-  \item Thus, the K-S statistic for each bootstrap case is $max(\lvert F(x)-S^*_n(x) \rvert)$
+  \item Thus, the K-S statistic for each bootstrap case is $max(\lvert F(x)-F^*_n(x) \rvert)$
 \end{itemize}
 
-In parametric bootstrap, the resampling is done where $\hat{S}_n = F(.;\hat{\theta}_n)$. 
+In parametric bootstrap, the resampling is done where $\hat{F}_n = F(.;\hat{\theta}_n)$. 
 Bootstrap samples are drawn from ${F}(.,\hat{\theta}_n)$ where the assumed distribution 
 $F$ is normal and $\hat{\theta}_n = (\Xbar, s)$, the sample mean and sample standard 
 deviation. For each bootstrap sample, a K-S test statistic is found using those 
 fitted parameters.
 
-In non-parametric bootstrap, the resampling is done where $\hat{S}_n = S_n$.
+In non-parametric bootstrap, the resampling is done where $\hat{F}_n = F_n$. The non-parametric
+case requires a correction for bias detailed by \citet{Babu}. There is a known bias
+term $B_{n}(x) = \sqrt{n}(F_{n}(x) - F(x;\hat{\theta}_n)$. Including this term in the
+calculation of the K-S statistic corrects the bias \citet{Babu}:
+$d = \max\lvert F_{n}(x) - F(x) - B_{n}(x) \rvert$.
 
 Figure~\ref{fig:hist_fitted} displays the results of from our simulations. The procedure 
 is replicated $1000$ times using the standard normal distribution with sample size $n=100$. 
@@ -267,6 +270,20 @@ It is also possible to apply our procedure to other distributions. The data in F
   \includegraphics{hist_copula_gamma}
   \caption{Histograms demonstrating remedy with Gamma(3,1).}
   \label{fig:hist_copula_gamma}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula_ar2}
+  \caption{Histograms demonstrating copula use to correct dependence.}
+  \label{fig:hist_copula_ar2}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula_gev}
+  \caption{Histograms demonstrating copula use to correct dependence.}
+  \label{fig:hist_copula_gev}
 \end{figure}
 
 \hypertarget{sec:conclusion}{%
