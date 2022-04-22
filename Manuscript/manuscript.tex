@@ -298,11 +298,21 @@ It is also possible to apply our procedure to other distributions. The data in F
 \hypertarget{sec:conclusion}{%
 \section{Conclusion}\label{sec:conclusion}}
 
-Conclusion here.
+The K-S test has base assumptions that the hypothesized distribution is completely specified
+and the data is independent. When these assumptions are violated, the test is no
+longer accurate and remedies must be performed. In the case of fitted parameters, 
+parametric and non-parametric bootstrap can restore the power of the test. A bias 
+correction is required if the non-parametric form is used \citep{Babu}. In the case of dependent
+data, a procedure using bootstrap with copulas to model dependency shows positive results.
+When both assumptions are violated, that is the case where the data has dependence and 
+parameters must be fitted, the copula remedy also shows positive results. The tests were 
+performed on simulated data from a standard normal distribution, though also appear effective
+against other distributions such as gamma and gev. The copula remedy
+is not a complete solution. Regardless of the true depedence, we use an AR(1) model.
+Therefore, if the AR(1) model is a close approximation of the truth, the fix can work.
+However, in cases such as AR(2), the approximation is incorrect and the fix does not 
+completely restore power.
 
-\citet{Butorina}
-\citet{Racine}
-\citet{Wang}
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}
