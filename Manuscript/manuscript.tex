@@ -244,8 +244,9 @@ The remedy using copulas is effective in the case where both assumptions are vio
 This is shown in Figure~\ref{fig:hist_copula}. The "super naive" plot is the resulting 
 p-values when you naively use fitted parameters while ignoring dependence in the data.
 The "naive parametric" plot is the result of applying parametric bootstrap to correct
-for fitted parameters, as done in section \ref{fitted}. Of course, the "copula" plot 
-applies the fix for both assumptions.
+for fitted parameters while ignoring potential dependence. Of course, the "copula" 
+plot applies the fix for both assumptions. The results show that copula remedy generates 
+uniform p-values and restores the power of the K-S test.
 
 \begin{figure}[tbp]
   \centering
@@ -254,11 +255,12 @@ applies the fix for both assumptions.
   \label{fig:hist_copula}
 \end{figure}
 
-We would also like to show that copulas work for more than a simple AR(1) model. 
+The copula fix is not a complete solution, because regardless of the true dependence in the data
+we assume an AR(1) model by taking the lag-1 sample auto-spearman rho. However, we can 
+show that as long as the AR(1) assumption is a close approximation, the correction still restores power to the test.
 Figure~\ref{fig:hist_copula_ma1} is the procedure performed on data generated from 
-an MA(1) model with $\theta = 0.5$. Figure~\ref{fig:hist_copula_arma} is the procedure 
-performed on data generated from an ARMA(1,1) model with $\psi = 0.5$ and $\theta = 0.3$. 
-It is also possible to apply our procedure to other distributions. The data in Figure~\ref{fig:hist_copula_gamma} is generated from $Gamma ~ (3,1)$ with $\rho = 0.5$.
+an MA(1) model with $\theta = 0.5$. Figure~\ref{fig:hist_copula_arma} displays results with 
+data generated from an ARMA(1,1) model with $\psi = 0.5$ and $\theta = 0.3$. 
 
 \begin{figure}[tbp]
   \centering
@@ -274,6 +276,11 @@ It is also possible to apply our procedure to other distributions. The data in F
   \label{fig:hist_copula_arma}
 \end{figure}
 
+It is also possible to apply our procedure to other distributions. All of the simulations
+to this point have been done with standard normal data. The data in Figure~\ref{fig:hist_copula_gamma} 
+is generated from $Gamma ~ (3,1)$ with a correlation coefficient of $\rho = 0.5$. Figure~\ref{fig:hist_copula_gev}
+shows the procedure applied to data from $GEV ~ (0, 0.2, 1)$ with a correlation coefficient of $\rho = 0.5$. 
+
 \begin{figure}[tbp]
   \centering
   \includegraphics{hist_copula_gamma}
@@ -283,16 +290,22 @@ It is also possible to apply our procedure to other distributions. The data in F
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_copula_ar2}
-  \caption{Histograms demonstrating copula use to correct dependence.}
-  \label{fig:hist_copula_ar2}
-\end{figure}
-
-\begin{figure}[tbp]
-  \centering
   \includegraphics{hist_copula_gev}
   \caption{Histograms demonstrating copula use to correct dependence.}
   \label{fig:hist_copula_gev}
+\end{figure}
+
+Where this remedy falls short is when the approximation of an AR(1) model is too inaccurate.
+An AR(2) model can be used to demonstrate this. For an AR(2) model with $\phi = (0.5, 0.3)$,
+Figure~\ref{fig:hist_copula_ar2} displays the results of applying the various remedies. 
+While the remedies improve the plot of the p-values in comparison to the naive case,
+because the approximation is not close enough the correction does not work completely.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics{hist_copula_ar2}
+  \caption{Histograms demonstrating copula use to correct dependence.}
+  \label{fig:hist_copula_ar2}
 \end{figure}
 
 \hypertarget{sec:conclusion}{%
