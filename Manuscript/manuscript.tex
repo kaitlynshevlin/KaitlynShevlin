@@ -252,6 +252,12 @@ AR-1 parameter of the normal copula is set to match the be the sample serial
 Spearman's rho of the observed sample. The procedure is as follows.
 
 
+\jy{simulate $X_t | X_{t-1}$, assuming $F$:
+  $Z_{t-1} = \Phi^{-1}[ F^(X_{t-1})]$;
+  $Z_{t} = Z_{t -1} + \rho \epsilon_t$;
+  $X_t = F^{-1} [ \Phi(Z_t) ]$
+  }
+  
 \begin{enumerate}
   \item Calculate the observed KS statistic \jy{the observed statistic is
       calculated the same way still, so it is not needed in the algorithm here}
