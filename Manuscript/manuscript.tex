@@ -253,8 +253,8 @@ Spearman's rho of the observed sample. The procedure is as follows.
 
 
 \jy{simulate $X_t | X_{t-1}$, assuming $F$:
-  $Z_{t-1} = \Phi^{-1}[ F^(X_{t-1})]$;
-  $Z_{t} = Z_{t -1} + \rho \epsilon_t$;
+  $Z_{t-1} = \Phi^{-1}[ F(X_{t-1})]$;
+  $Z_{t} = \rho Z_{t -1} +  \epsilon_t$;
   $X_t = F^{-1} [ \Phi(Z_t) ]$
   }
   
