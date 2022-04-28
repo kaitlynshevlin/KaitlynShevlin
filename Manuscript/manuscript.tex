@@ -86,21 +86,29 @@ statistical software packages, such as function \texttt{ks.test} in R
 \citep{R, Marsaglia}.
 
 The standard one-sample KS test applies to independent data with a continuous
-hypothesized distribution that is completely specified.
-\jy{this paragraph needs some reorganization.
-  Flow: not applicable to discrete or rounded data (give references; which is
-  not the focus of this paper);
-  not applicable to fitted distributions;
-  not applicable to serially dependent data}
-\jy{break the big paragraph into smaller ones}
-Often in literature, it has been "discovered" that the test loses its power when 
-applied to dependent or discrete data with hypothesized distributions containing 
-estimated parameters. DISCRETE SECTION HERE. This issue with discrete or rounded
-is not the focus of this paper, though is a common misuse that should be 
-noted.
+hypothesized distribution that is completely specified. Often in literature, it 
+has been "discovered" that the test loses its power when applied to dependent or 
+discrete data with hypothesized distributions containing estimated parameters 
+\citep{Steinskog}.
+
+It is well known that the standard test does not apply for
+discrete data. \citet{Noether} provides a brief demonstration of the 
+conservative character of the KS test when using discrete functions. 
+There are remedies that allow the KS test to be used in discrete cases. 
+\citet{Conover} describes a method for finding the exact critical level for 
+discrete cases and derives its power. \citet{Gleser} provides methods for 
+adapting existing algorithms to provide results when F(x) is discontinuous.
+The discrete KS test is available in various statistical software packages.
+The package \textsf{dgof} implements the methods from \citet{Conover} for 
+one-sided tests and the methods from \citet{Gleser} for exact two-sided 
+p-values \citep{Arnold}. The \textsf{KSgeneral} package provides a fast and 
+accurate method for when F(x) is arbitrary, discontinuous, or continuous that 
+uses an alternative fast Fourier transform based method \citep{Dimitrova}.
+This issue with discrete or rounded is not the focus of this paper, though is a
+common misuse that should be noted.
 
 The standard KS test is not applicable when the hypothesized distribution 
-contains fitted parameters. \citet{Steinskog} demonstrates the change in power 
+contains fitted parameters. \citet{Steinskog} "discovers" the change in power 
 when using estimated parameters and stress caution in using the KS test in such 
 ways. \citet{Lilliefors} shows that using the standard table when values of the 
 mean and standard deviation are estimated obtains extremely conservative 
