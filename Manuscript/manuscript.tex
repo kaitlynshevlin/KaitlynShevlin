@@ -178,11 +178,11 @@ distribution of the testing statistic.
   \item 
     Fit $F_\theta$ to the sample and obtain estimated $\hat\theta_n^*$
   \item
-    Obtain the empirical distribution function of the random sample $F_n^*$
+    Obtain the empirical distribution function $F_n^*$ of $X_1^*, \ldots, X_n^*$.
   \item 
     Calculate bootstrap KS statistic
     \[
-      D^* = \sup_x \lvert F_n^* (x)- F_{\hat\theta_n^*}^*(x) \rvert.
+      D^* = \sup_x \lvert F_n^* (x)- F_{\hat\theta_n^*}(x) \rvert.
     \]
   \item
     Repeat the previous steps a large number $B$ times and use the empirical
@@ -332,7 +332,7 @@ assess the significance of the observed KS statistic.
 \item 
   Calculate bootstrap KS statistic
   \[
-    D^* = \sup_x \lvert F_n^* (x)- F_{\hat\theta_n^*}^*(x) \rvert.
+    D^* = \sup_x \lvert F_n^* (x)- F_{\hat\theta_n^*}(x) \rvert.
   \]
 \item
   Repeat the previous steps a large number $B$ times and use the empirical
