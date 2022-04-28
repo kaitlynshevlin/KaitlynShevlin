@@ -1,11 +1,11 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 .Ruserdata
 .DS_Store
-KS-Test-Thesis.Rproj
+*.Rproj
 manuscript.pdf
-manuscript.log
-manuscript.out
-manuscript.aux
-Simulation.nb.html
+*.log
+*.out
+*.aux
+*.html
