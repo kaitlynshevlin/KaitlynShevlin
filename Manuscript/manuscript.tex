@@ -73,9 +73,10 @@ tests for comparing a sample with a hypothesized parametric distribution.
 Let $X_1, ..., X_n$ be a random sample from some continuous distribution. 
 The null hypothesis $H_0$ is that the population distribution is $F$.
 Let $F_n(\cdot)$ be the empirical cumulative distribution. The KS statistic is
-\[
+\begin{equation}
+  \label{eq:ks_standard}
   D = \sup_x | F_{n}(x) - F(x) |.
-\]
+\end{equation}
 The distribution of $D$ under $H_0$ turned out to be independent of the
 distribution $F$ and a table of critical values for $D$ has been constructed
 \citep{Massey} for various sample sizes $n$ and significance 
@@ -156,9 +157,10 @@ is $H_0$: the random sample $X_1, \ldots, X_n$ come from a continuous
 distribution $F_{\theta}$ with unspecified parameter $\theta$.
 Let $\hat\theta_n$ be an estimator of $\theta$, which could be, for example,
 maximum likelihood estimator of moment estimator. The test statistic is
-\[
+\begin{equation}
+  \label{eq:ks_fitted}
   D = \sup_x | F_n(x) - F_{\hat\theta_n}(x) |.
-\]
+\end{equation}
 Since $F_{\hat\theta_n}$ is not the same as the true data generating
 $F_\theta$, the null distribution of $D$ obtained in existing implementations in
 software packages which assumes completely known $F_\theta$ no long applies
@@ -185,7 +187,7 @@ distribution of the testing statistic.
   \item 
     Fit $F_\theta$ to the sample and obtain estimated $\hat\theta_n^*$
   \item
-    Obtain the empirical distribution function of the random sample $F_n^*$
+    Obtain the empirical distribution function $F_n^*$ of $X_1^*, \ldots, X_n^*$.
   \item 
     Calculate bootstrap KS statistic
     \[
@@ -279,6 +281,12 @@ The AR-1 parameter of the normal copula is set to match the be the sample serial
 Spearman's rho of the observed sample. The procedure is as follows.
 
 
+\jy{simulate $X_t | X_{t-1}$, assuming $F$:
+  $Z_{t-1} = \Phi^{-1}[ F(X_{t-1})]$;
+  $Z_{t} = \rho Z_{t -1} +  \epsilon_t$;
+  $X_t = F^{-1} [ \Phi(Z_t) ]$
+  }
+  
 \begin{enumerate}
   \item 
     Black box
@@ -287,7 +295,7 @@ Spearman's rho of the observed sample. The procedure is as follows.
     Transform bootstrap sample to 
   \item
     Repeat the previous steps a large number $B$ times and use the empirical
-    distribution of the $B$ test statistics as an approximate distribution of
+    distribution of the $B$ test statistics to approximate
     the null distribution of the observed statistic. 
 \end{enumerate}
 
@@ -330,6 +338,39 @@ uniform p-values and restores the power of the KS test.
   \caption{Histograms demonstrating copula use to correct fitted parameters and dependence.}
   \label{fig:hist_copula}
 \end{figure}
+
+Let $\hat\theta_n$ be the fitted parameter value of $F_{\theta}$. The observed
+KS statistic is calculated as in Equation~\eqref{eq:ks_fitted}. The bootstrap
+procedure in Section~\ref{sec:fitted} is no longer valid because the serial
+dependence is not accounted for. Let $r$ be the
+AR-1 coefficient of the normal copula that matches the sample first-order
+Spearman's rho of the observed data as obtained by the \texttt{iRho} function in
+the \textsf{copula} package. We propose the following bootstrap procedure to
+assess the significance of the observed KS statistic.
+\begin{enumerate}
+\item
+  Generate $Z_1, \ldots, Z_n$ from an AR(1) process with autocorrelation
+  coefficient $r$ such that the $Z_i$'s are $N(0, 1)$ variables.
+\item
+  Form a bootstrap sample $X_i^* = F^{-1}_{\hat\theta_n} [\Phi(Z_i)]$,
+  $i = 1, \ldots, n$, whose first-order sample Spearman's rho matches that of
+  the observed data.
+\item
+  Fit $F_\theta$ to the sample $X_1^*, \ldots, X_n^*$ and obtain estimator $\hat\theta_n^*$
+\item
+  Obtain the empirical distribution function $F_n^*$ of the bootstrap sample
+  $X_1^*, \ldots, X_n^*$.
+\item 
+  Calculate bootstrap KS statistic
+  \[
+    D^* = \sup_x \lvert F_n^* (x)- F_{\hat\theta_n^*}(x) \rvert.
+  \]
+\item
+  Repeat the previous steps a large number $B$ times and use the empirical
+    distribution of the $B$ test statistics to approximate
+    the null distribution of the observed statistic.      
+\end{enumerate}
+
 
 The copula fix is not a complete solution, because regardless of the true dependence in the data
 we assume an AR(1) model by taking the lag-1 sample auto-spearman rho. However, we can 
