@@ -306,12 +306,12 @@ Spearman's rho of the observed sample. The procedure is as follows.
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_copula_only}
+  \includegraphics{hist_ar1_FD}
   \caption{Histograms demonstrating copula use to correct dependence.}
-  \label{fig:hist_copula_only}
+  \label{fig:hist_ar1_FD}
 \end{figure}
 
-Figure~\ref{fig:hist_copula_only} displays the results of the copula remedy for dependent data.
+Figure~\ref{fig:hist_ar1_FD} displays the results of the copula remedy for dependent data.
 The data is generated from an AR-1 model with $\psi = .5$. The copula used is to model
 dependence is the normal copula. $1000$ replicate tests were performed with
 $B = 1000$ bootstrap samples per test.
@@ -325,7 +325,7 @@ potential dependence.
 \jy{give a stronger motivation; last section is not practical at all because we
   often don't know the parameters; this section combines the last two}
 The remedy using copulas is effective in the case where both assumptions are violated.
-This is shown in Figure~\ref{fig:hist_copula}. The ``super naive" method is the resulting 
+This is shown in Figure~\ref{fig:hist_ar1_FD}. The ``super naive" method is the resulting 
 p-values when you naively use fitted parameters while ignoring dependence in the data.
 The ``naive parametric" plot is the result of applying parametric bootstrap to correct
 for fitted parameters while ignoring potential dependence. Of course, the "copula" 
@@ -334,9 +334,9 @@ uniform p-values and restores the power of the KS test.
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_copula}
+  \includegraphics{hist_ar1_FD}
   \caption{Histograms demonstrating copula use to correct fitted parameters and dependence.}
-  \label{fig:hist_copula}
+  \label{fig:hist_ar1_FD}
 \end{figure}
 
 Let $\hat\theta_n$ be the fitted parameter value of $F_{\theta}$. The observed
@@ -375,45 +375,45 @@ assess the significance of the observed KS statistic.
 The copula fix is not a complete solution, because regardless of the true dependence in the data
 we assume an AR(1) model by taking the lag-1 sample auto-spearman rho. However, we can 
 show that as long as the AR(1) assumption is a close approximation, the correction still restores power to the test.
-Figure~\ref{fig:hist_copula_ma1} is the procedure performed on data generated from 
-an MA(1) model with $\theta = 0.5$. Figure~\ref{fig:hist_copula_arma} displays results with 
+Figure~\ref{fig:hist_ma1_FD} is the procedure performed on data generated from 
+an MA(1) model with $\theta = 0.5$. Figure~\ref{fig:hist_arma_FD} displays results with 
 data generated from an ARMA(1,1) model with $\psi = 0.5$ and $\theta = 0.3$. 
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_copula_ma1}
-  \includegraphics{hist_copula_arma}
+  \includegraphics{hist_ma1_FD}
+  \includegraphics{hist_arma_FD}
   \caption{MA-1 and ARMA(1,1)}
   \label{fig:hist_copula_ma1}
 \end{figure}
 
 
 It is also possible to apply our procedure to other distributions. All of the simulations
-to this point have been done with standard normal data. The data in Figure~\ref{fig:hist_copula_gamma} 
-is generated from $Gamma ~ (3,1)$ with a correlation coefficient of $\rho = 0.5$. Figure~\ref{fig:hist_copula_gev}
+to this point have been done with standard normal data. The data in Figure~\ref{fig:hist_gamma_FD} 
+is generated from $Gamma ~ (3,1)$ with a correlation coefficient of $\rho = 0.5$. Figure~\ref{fig:hist_gev_FD}
 shows the procedure applied to data from $GEV ~ (0, 0.2, 1)$ with a correlation coefficient of $\rho = 0.5$. 
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_copula_gamma}
-  \includegraphics{hist_copula_gev}
+  \includegraphics{hist_gamma_FD}
+  \includegraphics{hist_gev_FD}
   \caption{Gamma(3,1)}
-  \label{fig:hist_copula_gamma}
+  \label{fig:hist_gamma_FD}
 \end{figure}
 
 
 Where this remedy falls short is when the approximation of an AR-1 dependence 
 structure is too inaccurate. An AR-2 model can be used to demonstrate this. For 
-an AR-2 model with $\phi = (0.5, 0.3)$, Figure~\ref{fig:hist_copula_ar2} 
+an AR-2 model with $\phi = (0.5, 0.3)$, Figure~\ref{fig:hist_ar2_FD} 
 displays the results of applying the various remedies. While the remedies 
 improve the plot of the p-values in comparison to the naive case, because the 
 approximation is not close enough the correction does not work completely.
 
 \begin{figure}[tbp]
   \centering
-  \includegraphics{hist_copula_ar2}
+  \includegraphics{hist_ar2_FD}
   \caption{AR-2}
-  \label{fig:hist_copula_ar2}
+  \label{fig:hist_ar2_FD}
 \end{figure}
 
 
