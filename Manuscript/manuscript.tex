@@ -79,17 +79,17 @@ Let $F_n(\cdot)$ be the empirical cumulative distribution. The KS statistic is
   \label{eq:ks_standard}
   D = \sup_x | F_{n}(x) - F(x) |.
 \end{equation}
-The distribution of $D$ under $H_0$ turned out to be independent of the
+The distribution of $D$ under $H_0$ turns out to be independent of the
 distribution $F$ and a table of critical values for $D$ has been constructed
 \citep{Massey} for various sample sizes $n$ and significance 
-levels $\alpha$. If the value of $d$ exceeds the test's corresponding critical 
-value, the null hypothesis is rejected. The KS test is available in popular 
+levels $\alpha$. If the value of $D$ exceeds the test's corresponding critical 
+value the null hypothesis is rejected. The KS test is available in popular 
 statistical software packages, such as function \texttt{ks.test} in R 
 \citep{R, Marsaglia}.
 
 The standard one-sample KS test applies to independent data with a continuous
 hypothesized distribution that is completely specified. Often in literature, it 
-has been ``discovered" that the test loses its power when applied to dependent 
+has been ``discovered" that the test loses its size when applied to dependent 
 or discrete data with hypothesized distributions containing estimated parameters 
 \citep{Steinskog}. 
 
@@ -109,21 +109,21 @@ This issue with discrete or rounded is not the focus of this paper, though is a
 common misuse that should be noted.
 
 The standard KS test is not applicable when the hypothesized distribution 
-contains fitted parameters. \citet{Steinskog} "discovers" the change in power 
+contains fitted parameters. \citet{Steinskog} ``discovers" the change in power 
 when using estimated parameters and stress caution in using the KS test in such 
-ways. \citet{Lilliefors} shows that using the standard table when values of the 
-mean and standard deviation are estimated obtains extremely conservative 
-results. This is supported by \citet{Capasso}, which concludes that failing to 
-re-estimate the parameters may lead to wrong, overly-conservative approximations 
-to the distributions of goodness-of-fit test statistics based on the empirical 
-distribution function. \citet{Capasso} also notes that the impact of this 
-possible mistake may turn out to be dramatic and does not vanish as the sample 
-size increases. Remedies are provided by \citet{Genest} and \citet{Babu} in the 
-form of bootstrap. \citet{Genest} provides validity for using parametric 
-bootstrap with various goodness-of-fit tests. \citet{Babu} details the bootstrap
-procedure for goodness-of-fit tests and notes that both parametric and 
-non-parametric procedures lead to correct asymptotic levels, however there 
-is a correction required for the non-parametric case. 
+ways. \citet{Lilliefors} shows for the normal distribution that using the 
+standard table when values of the mean and standard deviation are estimated 
+obtains extremely conservative results. This is supported by \citet{Capasso}, 
+which concludes that failing to re-estimate the parameters may lead to wrong, 
+overly-conservative approximations to the distributions of goodness-of-fit test 
+statistics based on the empirical distribution function. \citet{Capasso} also 
+notes that the impact of this mistake may turn out to be dramatic and does not 
+vanish as the sample size increases. Remedies are provided by \citet{Genest} and
+\citet{Babu} in the form of bootstrap. \citet{Genest} provides validity for 
+using parametric bootstrap with various goodness-of-fit tests. \citet{Babu} 
+details the bootstrap procedure for goodness-of-fit tests and notes that both 
+parametric and non-parametric procedures lead to correct asymptotic levels, 
+however there is a correction required for the non-parametric case. 
 
 In the case of serially dependent data, \citet{Durilleul} demonstrates that the 
 KS statistic is too liberal for medium-to-high positive autocorrelation values. 
@@ -152,10 +152,10 @@ The rest of the paper is organized as follows. Section~\ref{sec:fitted}
 investigates the scenario where the hypothesized distribution has unspecified
 parameters. Both parametric and nonparametric bootstrap are available to fix the
 issue. Section~\ref{sec:dependence} investigates the scenario where the data of 
-the empirical distribution is serially dependent. Our bootstrap procedure 
+the empirical distribution is serially dependent. A bootstrap procedure 
 employing copulas is a working solution. Section~\ref{sec:fittedwithdependence}
 explores the case where a combination of the first two scenarios occurs. The 
-copula procedure is available as a fix here as well. 
+copula procedure can be adjusted for fitted parameters to be available as a fix. 
 Section~\ref{sec:conclusion} concludes with a discussion.
 
 \section{Fitted Parameters}
@@ -186,7 +186,7 @@ $N(\bar X, s^2)$ where $\bar X$ is the sample mean and $s^2$ is the sample
 variance. Since the data is generated from a standard normal distribution with 
 seemingly all assumptions met, a uniform distribution of $U(0, 1)$ is expected 
 for the p-values. However this is under the assumption that the KS test holds 
-its power, which it no longer does due to using fitted parameters. Therefore, 
+its size, which it no longer does due to using fitted parameters. Therefore, 
 there is notable deviation from the uniform distribution. 
 
 
@@ -241,7 +241,7 @@ The p-value can be calculated by counting the number of bootstrap KS
 statistics greater than or equal to the observed KS statistic, and then dividing 
 by the number of bootstrap samples. Figure~\ref{fig:hist_fitted} displays the 
 results of from our simulations. We would expect the distribution of p-values 
-to be normal in the case where the KS test holds its power. It is clear from the 
+to be uniform in the case where the KS test holds its size. It is clear from the 
 figure that both parametric and nonparametric bootstrap processes correct for 
 the problem of fitted parameters. The plots for the bootstrapped p-values appear
 to be $U(0,1)$, unlike the naive p-values.
@@ -252,7 +252,7 @@ to be $U(0,1)$, unlike the naive p-values.
   \caption{The Naive plot (left) is the histogram of p-values from the standard 
   KS test with fitted parameters. The Parametric plot (middle) is the histogram
   of p-values from implementing parametric bootstrap. The Babu plot (right) is 
-  the histogram of p-values from implementing the nonparametric bootstrap with a 
+  the histogram of p-values from implementing nonparametric bootstrap with a 
   correction for bias. In each case, $1000$ replicate tests were performed on 
   the standard normal distribution with sample size $n = 100$. $B = 1000$ 
   bootstrap samples are obtained for each test.}
@@ -270,7 +270,7 @@ test would be valuable. When the KS test is performed on dependent data it
 performs poorly. In this situation, the null hypothesis is $H_0$: the random 
 sample $X_1, \ldots, X_n$ come from a continuous distribution $F$ where $F$ has 
 completely specified parameters. The test statistic is the same as 
-Equation~\ref{eq:ks_standard}. However, since the data is dependent, the null 
+Equation~\eqref{eq:ks_standard}. However, since the data is dependent, the null 
 hypothesis is wrong and must be corrected. This is demonstrated with a 
 simulation in Figure~\ref{fig:hist_correlation}. Data is generated from a 
 first-order autoregressive model (AR(1)) with a standard normal distribution. 
@@ -350,7 +350,7 @@ dependence is the normal copula. The distribution of p-values is again expected
 to be $U(0, 1)$ for a valid test. The Naive plot is clearly not uniform and 
 reinforces the results shown in Figure~\ref{fig:hist_correlation}. The Copula 
 plot, which implements the aforementioned procedure to correct for dependence
-in the data, appears to be uniform and restores the power of the KS test.
+in the data, appears to be uniform and restores the size of the KS test.
 
 The procedure detailed in this section can also provide a reasonable 
 approximation in cases where the true dependence structure is not far from 
@@ -405,7 +405,7 @@ hypothesized distribution. Therefore, it is valuable to have a procedure that
 corrects for both fitted parameters and serially dependent data. The remedy 
 using copulas can be modified to be effective in the case where both assumptions
 must be violated. The null hypothesis is equivalent to Section~\ref{sec:fitted} 
-and the test statistic is equal to Equation~\ref{eq:ks_fitted}.
+and the test statistic is equal to Equation~\eqref{eq:ks_fitted}.
 
 Let $\hat\theta_n$ be the fitted parameter value of $F_{\theta}$. The observed
 KS statistic is calculated as in Equation~\eqref{eq:ks_fitted}. The bootstrap
@@ -446,7 +446,7 @@ parameters while providing no adjustment for dependent data invalidates the KS
 test. As well, only using the parametric bootstrap remedy for fitted parameters 
 from Section~\ref{sec:fitted} seems to provide weaker results than the 
 copula remedy presented above. The results show that copula remedy generates 
-uniform p-values and restores the power of the KS test.
+uniform p-values and restores the size of the KS test.
 
 \begin{figure}[tbp]
   \centering
@@ -464,11 +464,11 @@ uniform p-values and restores the power of the KS test.
 
 Similar to Section~\ref{sec:dependence}, the copula fix is not a complete 
 solution. Regardless of the true dependence in the data we assume an AR(1) 
-dependence structure by taking the lag-1 sample auto-spearman rho. However, we 
-can show that as long as the AR(1) assumption is a close approximation, the 
-correction still provides a reasonable approximation that can be useful for 
-practical purposes. Figure~\ref{fig:hist_ma1_arma_ar2_FD} shows the results of the 
-procedure performed on data generated with dependence structures of  MA(1), 
+dependence structure by taking the sample first-order Spearman's rho. However, 
+we can show that as long as the AR(1) assumption is a close approximation, the 
+correction still provides a reasonable results that can be useful for 
+practical purposes. Figure~\ref{fig:hist_ma1_arma_ar2_FD} shows the results of 
+the procedure performed on data generated with dependence structures MA(1), 
 ARMA(1, 1), and AR(2). Naively fitting parameters and not adjusting for 
 dependence clearly deviates from a uniform distribution of p-values. Parametric 
 bootstrap provides some correction but does not account for depedence, so 
@@ -481,16 +481,16 @@ procedure.
 \begin{figure}[tbp]
   \centering
   \includegraphics{hist_ma1_arma_ar2_FD}
-  \caption{The Super Naive plots (left) are the histograms of p-values from the 
+  \caption{The Super Naive plots (top) are the histograms of p-values from the 
   standard KS test with fitted parameters. The Naive Parametric plots (middle) 
   are the histograms of p-values from implementing parametric bootstrap. The 
-  Copula plots are the histograms of p-values from implementing parametric 
-  bootstrap with copulas for dependence and correcting for fitted parameters. 
-  The data is generated from an MA(1) process (left) with $\theta = .5$, ARMA(1,
-  1) process (middle) with $\psi = .5$ and $\theta = .3$, and AR(2) process 
-  (right) with $\psi = (.5, .3)$ of the standard normal distribution. In each 
-  case, $1000$ replicate tests were performed with sample size $n = 100$ and 
-  $B = 1000$ bootstrap samples.}
+  Copula plots (bottom) are the histograms of p-values from implementing 
+  parametric bootstrap with copulas for dependence and correcting for fitted 
+  parameters. The data is generated from an MA(1) process (left) with 
+  $\theta = .5$, ARMA(1, 1) process (middle) with $\psi = .5$ and $\theta = .3$,
+  and AR(2) process (right) with $\psi = (.5, .3)$ of the standard normal 
+  distribution. In each case, $1000$ replicate tests were performed with sample 
+  size $n = 100$ and $B = 1000$ bootstrap samples.}
   \label{fig:hist_ma1_arma_ar2_FD}
 \end{figure}
 
@@ -512,7 +512,7 @@ can be adapted for various families of distributions.
   with a correlation coefficient of $r = 0.5$. In each case, $1000$ replicate 
   tests were performed with sample size $n = 100$ and $B = 1000$ bootstrap 
   samples.}
-  \label{fig:hist_gamma__gev_FD}
+  \label{fig:hist_gamma_gev_FD}
 \end{figure}
 
 
@@ -523,17 +523,17 @@ The KS test has base assumptions that the hypothesized distribution is
 completely specified and the data is independent. When these assumptions are 
 violated, the test is no longer accurate and remedies must be performed. In the 
 case of fitted parameters, parametric and non-parametric bootstrap can restore 
-the power of the test. A bias correction is required if the non-parametric form 
+the size of the test. A bias correction is required if the non-parametric form 
 is used \citep{Babu}. In the case of dependent data, a procedure using bootstrap 
 with copulas to model dependency shows positive results. When both assumptions 
 are violated, that is the case where the data has dependence and parameters must 
 be fitted, an adjusted copula procedure also shows positive results. The tests 
 appear effective for a variety of families of distributions. The copula remedy 
 is not a complete solution and has limitations. Regardless of the true 
-dependence, we assume an AR(1) depedennce structure. Therefore, if the AR(1) 
+dependence, we assume an AR(1) depedence structure. Therefore, if the AR(1) 
 dependence structure is a close approximation of the truth, the fix can work. 
 However, in cases such as AR(2), if the approximation is too far from the true 
-depedence structure the fix does not completely restore power As well, tests 
+depedence structure the fix does not completely restore size As well, tests 
 were only performed with the normal copula. It is possible that other copulas
 could provide stronger results based on the true dependence of the data.
 
