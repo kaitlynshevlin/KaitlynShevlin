@@ -230,3 +230,15 @@ Section 4, Xi follows F(theta), theta unknown and data dependent.
 Section 5, for thesis, conclude. For paper, include real data.
 
 Include all figures. Lanzante page numbers
+——————————————————————————————————————————————
+Figure caption, describe what they are (this is naive, etc.)
+In the text, discuss the results (we would expect but)
+
+Generate x1 from hypothesized distribution, then next one's depend on previous
+Assuming normal copula
+Given Xt-1, what is the distribution of Xt
+Reorder the plots so that Naive is first
+X follows some F distribution
+Convert so Z, Z follows AR-1 process. Z's follow normal marginally. Transform Z to X
+Step 1 generate X*, step 2 generate D*
+1. If working dependence is the truth, should be an exact fix. Otherwise, it provides reasonably good fix
