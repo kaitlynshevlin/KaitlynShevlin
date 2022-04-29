@@ -441,13 +441,12 @@ significance of the observed KS statistic.
 \end{enumerate}
 
 Figure~\ref{fig:hist_ar1_FD} shows the results of our simulation on data 
-simulated from an AR(1) process. The ``super naive" method is the resulting 
-p-values when you naively use fitted parameters while ignoring dependence in the
-data. The ``naive parametric" plot is the result of applying parametric 
-bootstrap to correct for fitted parameters while ignoring potential dependence. 
-Of course, the "copula" plot applies the fix for both assumptions. The results 
-show that copula remedy generates uniform p-values and restores the power of the
-KS test.
+simulated from an AR(1) process. As should be expected, naively fitting 
+parameters while providing no adjustment for dependent data invalidates the KS 
+test. As well, only using the parametric bootstrap remedy for fitted parameters 
+from Section~\ref{sec:fitted} seems to provide weaker results than the 
+copula remedy presented above. The results show that copula remedy generates 
+uniform p-values and restores the power of the KS test.
 
 \begin{figure}[tbp]
   \centering
@@ -463,12 +462,21 @@ KS test.
   \label{fig:hist_ar1_FD}
 \end{figure}
 
-The copula fix is not a complete solution, because regardless of the true dependence in the data
-we assume an AR(1) model by taking the lag-1 sample auto-spearman rho. However, we can 
-show that as long as the AR(1) assumption is a close approximation, the correction still restores power to the test.
-Figure~\ref{fig:hist_ma1_FD} is the procedure performed on data generated from 
-an MA(1) model with $\theta = 0.5$. Figure~\ref{fig:hist_arma_FD} displays results with 
-data generated from an ARMA(1,1) model with $\psi = 0.5$ and $\theta = 0.3$. 
+Similar to Section~\ref{sec:dependence}, the copula fix is not a complete 
+solution. Regardless of the true dependence in the data we assume an AR(1) 
+dependence structure by taking the lag-1 sample auto-spearman rho. However, we 
+can show that as long as the AR(1) assumption is a close approximation, the 
+correction still provides a reasonable approximation that can be useful for 
+practical purposes. Figure~\ref{fig:hist_ma1_arma_ar2_FD} shows the results of the 
+procedure performed on data generated with dependence structures of  MA(1), 
+ARMA(1, 1), and AR(2). Naively fitting parameters and not adjusting for 
+dependence clearly deviates from a uniform distribution of p-values. Parametric 
+bootstrap provides some correction but does not account for depedence, so 
+therefore the results of the copula remedy are more accurate and favorable.
+In the case of MA(1) and ARMA(1, 1), the true dependence appears close enough 
+to our assumption of AR(1) that the results are reasonable. AR(2) however
+appears to be just far enough from our assumption, showing a limitation of the 
+procedure.
 
 \begin{figure}[tbp]
   \centering
@@ -486,11 +494,11 @@ data generated from an ARMA(1,1) model with $\psi = 0.5$ and $\theta = 0.3$.
   \label{fig:hist_ma1_arma_ar2_FD}
 \end{figure}
 
-
-It is also possible to apply our procedure to other distributions. All of the simulations
-to this point have been done with standard normal data. The data in Figure~\ref{fig:hist_gamma_FD} 
-is generated from $Gamma ~ (3,1)$ with a correlation coefficient of $\rho = 0.5$. Figure~\ref{fig:hist_gev_FD}
-shows the procedure applied to data from $GEV ~ (0, 0.2, 1)$ with a correlation coefficient of $\rho = 0.5$. 
+It is also possible to apply our procedure to other families of distributions. 
+The data in Figure~\ref{fig:hist_gamma_gev_FD} is generated from the gamma and 
+generalized extreme value distributions. The results are favorable and show that 
+the procedure outlined as a fix for fitted parameters and spatially dependent 
+can be adapted for various families of distributions.
 
 \begin{figure}[tbp]
   \centering
@@ -508,14 +516,6 @@ shows the procedure applied to data from $GEV ~ (0, 0.2, 1)$ with a correlation 
 \end{figure}
 
 
-Where this remedy falls short is when the approximation of an AR(1) dependence 
-structure is too inaccurate. An AR(2) model can be used to demonstrate this. For 
-an AR(2) model with $\phi = (0.5, 0.3)$, Figure~\ref{fig:hist_ar2_FD} 
-displays the results of applying the various remedies. While the remedies 
-improve the plot of the p-values in comparison to the naive case, because the 
-approximation is not close enough the correction does not work completely.
-
-
 \section{Conclusion}
 \label{sec:conclusion}
 
@@ -527,13 +527,15 @@ the power of the test. A bias correction is required if the non-parametric form
 is used \citep{Babu}. In the case of dependent data, a procedure using bootstrap 
 with copulas to model dependency shows positive results. When both assumptions 
 are violated, that is the case where the data has dependence and parameters must 
-be fitted, the copula remedy also shows positive results. The tests were 
-performed on simulated data from a standard normal distribution, though also 
-appear effective against other distributions such as gamma and gev. The copula 
-remedy is not a complete solution. Regardless of the true dependence, we use an 
-AR(1) model. Therefore, if the AR(1) model is a close approximation of the truth, 
-the fix can work. However, in cases such as AR-2, the approximation too far and 
-the fix does not completely restore power.
+be fitted, an adjusted copula procedure also shows positive results. The tests 
+appear effective for a variety of families of distributions. The copula remedy 
+is not a complete solution and has limitations. Regardless of the true 
+dependence, we assume an AR(1) depedennce structure. Therefore, if the AR(1) 
+dependence structure is a close approximation of the truth, the fix can work. 
+However, in cases such as AR(2), if the approximation is too far from the true 
+depedence structure the fix does not completely restore power As well, tests 
+were only performed with the normal copula. It is possible that other copulas
+could provide stronger results based on the true dependence of the data.
 
 
 \bibliographystyle{chicago}
