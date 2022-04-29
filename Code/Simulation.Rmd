@@ -107,6 +107,8 @@ histogram <- c(rep("Parametric", n_tests), rep("Babu", n_tests), rep("Naive", n_
 p_values <- c(pvals_parametric, pvals_babu, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Naive", "Parametric", "Babu"))
+
 # Generate histograms plot
 hist_fitted <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
@@ -116,18 +118,6 @@ hist_fitted <- ggplot(results) +
 
 # Save the histogram figure
 ggsave(filename = "hist_fitted.pdf", plot = hist_fitted, path = "../Manuscript", height = 2.1, width = 6)
-
-data_new <- results                              # Replicate data
-data_new$histogram <- factor(data_new$histogram,      # Reordering group factor levels
-                         levels = c("Naive", "Parametric", "Babu"))
-
-# Generate histograms plot
-hist_fitted <- ggplot(data_new) + 
-                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
-                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
-                   theme(legend.position = "none") +
-                   facet_wrap(~histogram, scales = "free_y")
-hist_fitted
 ```
 
 ```{r babu}
@@ -245,8 +235,8 @@ ptm <- proc.time()
 n <- 100
 ar <- 0.5
 counter <- 0
-nrep <- 500
-B <- 100
+nrep <- 1000
+B <- 1000
 mean <- 0
 sd <- 1
 
@@ -268,6 +258,8 @@ histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
 p_values <- c(pvals_copula, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
+
 # Generate histograms plot
 hist_ar1_D <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
@@ -288,8 +280,8 @@ ptm <- proc.time()
 # Set variables
 n <- 100
 counter <- 0
-nrep <- 100
-B <- 100
+nrep <- 1000
+B <- 1000
 ma <- 0.5
 mean <- 0
 sd <- 1
@@ -312,6 +304,8 @@ histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
 p_values <- c(pvals_copula, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
+
 # Generate histograms plot
 hist_ma1_D <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
@@ -332,8 +326,8 @@ ptm <- proc.time()
 # Set variables
 n <- 100
 counter <- 0
-nrep <- 100
-B <- 100
+nrep <- 1000
+B <- 1000
 ar <- 0.5
 ma <- 0.3
 mean <- 0
@@ -352,16 +346,20 @@ pvals_copula <- replicate(nrep, test_copula_D(arima.sim(list(ar = ar,
 counter <- 0
 
 # P-vals from standard KS test
-pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(order = c(2, 0, 0), 
-                                                           ar = c(b1, b2)),
-                                                      rand.gen=rnorm,
-                                                      sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)),
-                                                      n = n))$p.value)
+pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(ar = ar, 
+                                                           ma = ma), 
+                                                      rand.gen=rnorm, 
+                                                      sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
+                                                      n = n),
+                                                mean = mean,
+                                                sd = sd)$p.value)
 
 # Create a master data_frame with all the results
 histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
 p_values <- c(pvals_copula, pvals_naive)
 results <- data_frame(p_values, histogram)
+
+results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
 
 # Generate histograms plot
 hist_arma_D <- ggplot(results) + 
@@ -383,8 +381,8 @@ ptm <- proc.time()
 # Set variables
 n <- 100
 counter <- 0
-nrep <- 100
-B <- 100
+nrep <- 1000
+B <- 1000
 b1 <- 0.5
 b2 <- 0.3
 mean <- 0
@@ -415,6 +413,8 @@ pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(order = c(2, 0, 0
 histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
 p_values <- c(pvals_copula, pvals_naive)
 results <- data_frame(p_values, histogram)
+
+results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
 
 # Generate histograms plot
 hist_ar2_D <- ggplot(results) + 
@@ -483,8 +483,8 @@ ptm <- proc.time()
 n <- 100
 rho <- 0.5
 counter <- 0
-nrep <- 100
-B <- 100
+nrep <- 1000
+B <- 1000
 shape <- 3
 scale <- 1
 
@@ -505,6 +505,8 @@ pvals_naive <- replicate(nrep, test_standard_gamma(genData(n, qgamma, shape = sh
 histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
 p_values <- c(pvals_copula, pvals_naive)
 results <- data_frame(p_values, histogram)
+
+results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
 
 # Generate histograms plot
 hist_gamma_D <- ggplot(results) + 
@@ -573,8 +575,8 @@ ptm <- proc.time()
 n <- 100
 rho <- 0.5
 counter <- 0
-nrep <- 100
-B <- 100
+nrep <- 1000
+B <- 1000
 loc <- 0
 shape <- 0.2
 scale <- 1
@@ -598,6 +600,8 @@ histogram <- c(rep("Copula", nrep), rep("Naive", nrep))
 p_values <- c(pvals_copula, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
+
 # Generate histograms plot
 hist_gev_D <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
@@ -612,8 +616,8 @@ print(proc.time() - ptm)
 ggsave(filename = "hist_gev_D.pdf", plot = hist_gev_D, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
-```{r Copula FD}
-test_copula_D <- function(x, dist, B) {
+```{r AR(1) FD}
+test_copula_FD <- function(x, dist, B) {
 
     # Get observed statistic
     n <- length(x)
@@ -671,7 +675,7 @@ nrep <- 1000
 B <- 1000
 
 # P-vals from using bootstrap with copulas
-pvals_copula <- replicate(nrep, test_copula_D(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), "pnorm", B = B))
+pvals_copula <- replicate(nrep, test_copula_FD(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), "pnorm", B = B))
 counter <- 0
 
 # P-vals from using parametric bootstrap
@@ -684,20 +688,21 @@ pvals_naive <- replicate(nrep, test_standard_ks_F(arima.sim(list(ar = ar), rand.
 histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Naive", nrep))
 p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
-save(results, file = "results_copula.RData")
+
+results$histogram <- factor(results$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
 
 # Generate histograms plot
-hist_ar1_D <- ggplot(results) + 
+hist_ar1_FD <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
                    facet_wrap(~histogram, scales = "free_y")
-hist_ar1_D
+hist_ar1_FD
 
 print(proc.time() - ptm)
 
 # Save the histogram figure
-ggsave(filename = "hist_ar1_D", plot = hist_ar1_D, path = "../Manuscript", height = 2.1, width = 6)
+ggsave(filename = "hist_ar1_FD.pdf", plot = hist_ar1_FD, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
 ```{r MA(1) FD}
@@ -726,8 +731,10 @@ histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Na
 p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
+
 # Generate histograms plot
-hist_ma1_D <- ggplot(results) + 
+hist_ma1_FD <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
@@ -735,10 +742,10 @@ hist_ma1_D <- ggplot(results) +
 
 print(proc.time() - ptm)
 
-hist_ma1_D
+hist_ma1_FD
 
 # Save the histogram figure
-ggsave(filename = "hist_ma1_D.pdf", plot = hist_ma1_D, path = "../Manuscript", height = 2.1, width = 6)
+ggsave(filename = "hist_ma1_FD.pdf", plot = hist_ma1_FD, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
 ```{r ARMA(1,1) FD}
@@ -781,8 +788,10 @@ histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Na
 p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
+
 # Generate histograms plot
-hist_arma_D <- ggplot(results) + 
+hist_arma_FD <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
@@ -790,10 +799,10 @@ hist_arma_D <- ggplot(results) +
 
 print(proc.time() - ptm)
 
-hist_arma_D
+hist_arma_FD
 
 # Save the histogram figure
-ggsave(filename = "hist_arma_D.pdf", plot = hist_arma_D, path = "../Manuscript", height = 2.1, width = 6)
+ggsave(filename = "hist_arma_FD.pdf", plot = hist_arma_FD, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
 ```{r AR(2) FD}
@@ -837,8 +846,10 @@ histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Na
 p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
+
 # Generate histograms plot
-hist_ar2_D <- ggplot(results) + 
+hist_ar2_FD <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
@@ -846,10 +857,10 @@ hist_ar2_D <- ggplot(results) +
 
 print(proc.time() - ptm)
 
-hist_ar2_D
+hist_ar2_FD
 
 # Save the histogram figure
-ggsave(filename = "hist_ar2_D.pdf", plot = hist_ar2_D, path = "../Manuscript", height = 2.1, width = 6)
+ggsave(filename = "hist_ar2_FD.pdf", plot = hist_ar2_FD, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
 ```{r Gamma FD}
@@ -975,6 +986,8 @@ histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Na
 p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
+
 # Generate histograms plot
 hist_gamma_FD <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
@@ -1064,7 +1077,7 @@ test_parametric_gev <- function(x, B = 1000) {
     scale.b <- fit.b$mle[2]
     shape.b <- fit.b$mle[3]
     
-    stat.b[i] <- ks.test(x.b, "pgev", shape = shape.b, scale = scale.b)$statistic
+    stat.b[i] <- ks.test(x.b, "pgev", loc.b, shape = shape.b, scale = scale.b)$statistic
   }
   
   # Return empirical p-value
@@ -1114,6 +1127,8 @@ histogram <- c(rep("Copula", nrep), rep("Naive Parametric", nrep), rep("Super Na
 p_values <- c(pvals_copula, pvals_parametric, pvals_naive)
 results <- data_frame(p_values, histogram)
 
+results$histogram <- factor(results$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
+
 # Generate histograms plot
 hist_gev_FD <- ggplot(results) + 
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
@@ -1127,4 +1142,112 @@ hist_gev_FD
 
 # Save the histogram figure
 ggsave(filename = "hist_gev_FD.pdf", plot = hist_gev_FD, path = "../Manuscript", height = 2.1, width = 6)
+```
+
+```{r hist_ma1_arma_ar2_D}
+load('results_ma1_D.RData')
+model <- rep("MA(1)", 2000)
+ma1 <- data_frame(results, new_col)
+
+load('results_arma_D.RData')
+model <- rep("ARMA(1, 1)", 2000)
+arma <- data_frame(results, new_col)
+
+load('results_ar2_D.RData')
+model <- rep("AR(2)", 2000)
+ar2 <- data_frame(results, new_col)
+
+data <- rbind(ma1, arma, ar2)
+
+data$model <- factor(data$model, levels = c("MA(1)", "ARMA(1, 1)", "AR(2)"))
+data$histogram <- factor(data$histogram, levels = c("Naive", "Copula"))
+
+# Generate histograms plot
+hist_ma1_arma_ar2_D <- ggplot(data) + 
+                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
+                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                   theme(legend.position = "none") +
+                   facet_wrap(histogram~model, scales = "free_y")
+hist_ma1_arma_ar2_D
+
+ggsave(filename = "hist_ma1_arma_ar2_D.pdf", plot = hist_ma1_arma_ar2_D, path = "../Manuscript", height = 4.2, width = 6)
+```
+
+```{r hist_gamma_gev_D}
+load('results_gamma_D.RData')
+model <- rep("Gamma", 2000)
+gamma <- data_frame(results, model)
+
+load('results_gev_D.RData')
+model <- rep("GEV", 2000)
+gev <- data_frame(results, model)
+
+data <- rbind(gamma, gev)
+
+data$model <- factor(data$model, levels = c("Gamma", "GEV"))
+data$histogram <- factor(data$histogram, levels = c("Naive", "Copula"))
+
+# Generate histograms plot
+hist_gamma_gev_D <- ggplot(data) + 
+                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
+                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                   theme(legend.position = "none") +
+                   facet_wrap(histogram~model, scales = "free_y")
+hist_gamma_gev_D
+
+ggsave(filename = "hist_gamma_gev_D.pdf", plot = hist_gamma_gev_D, path = "../Manuscript", height = 4.2, width = 6)
+```
+
+```{r hist_ma1_arma_ar2_FD}
+load('results_ma1_FD.RData')
+model <- rep("MA(1)", 3000)
+ma1 <- data_frame(results, model)
+
+load('results_arma_FD.RData')
+model <- rep("ARMA(1, 1)", 3000)
+arma <- data_frame(results, model)
+
+load('results_ar2_FD.RData')
+model <- rep("AR(2)", 3000)
+ar2 <- data_frame(results, model)
+
+data <- rbind(ma1, arma, ar2)
+
+data$model <- factor(data$model, levels = c("MA(1)", "ARMA(1, 1)", "AR(2)"))
+data$histogram <- factor(data$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
+
+# Generate histograms plot
+hist_ma1_arma_ar2_FD <- ggplot(data) + 
+                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
+                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                   theme(legend.position = "none") +
+                   facet_wrap(histogram~model, scales = "free_y")
+hist_ma1_arma_ar2_FD
+
+ggsave(filename = "hist_ma1_arma_ar2_FD.pdf", plot = hist_ma1_arma_ar2_FD, path = "../Manuscript", height = 4.2, width = 6)
+```
+
+```{r hist_gamma_gev_FD}
+load('results_gamma_FD.RData')
+model <- rep("Gamma", 3000)
+gamma <- data_frame(results, model)
+
+load('results_gev_FD.RData')
+model <- rep("GEV", 3000)
+gev <- data_frame(results, model)
+
+data <- rbind(gamma, gev)
+
+data$model <- factor(data$model, levels = c("Gamma", "GEV"))
+data$histogram <- factor(data$histogram, levels = c("Super Naive", "Naive Parametric", "Copula"))
+
+# Generate histograms plot
+hist_gamma_gev_FD <- ggplot(data) + 
+                   geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
+                   scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
+                   theme(legend.position = "none") +
+                   facet_wrap(histogram~model, scales = "free_y", ncol = 2)
+hist_gamma_gev_FD
+
+ggsave(filename = "hist_gamma_gev_FD.pdf", plot = hist_gamma_gev_FD, path = "../Manuscript", height = 4.2, width = 6)
 ```
