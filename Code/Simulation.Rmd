@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r}
+```{r packages}
 # Load packages
 library(tidyverse)
 library(copula)
@@ -320,7 +320,7 @@ print(proc.time() - ptm)
 ggsave(filename = "hist_ma1_D.pdf", plot = hist_ma1_D, path = "../Manuscript", height = 2.1, width = 6)
 ```
 
-```{r ARMA(1,1) D}
+```{r ARMA(1, 1) D}
 ptm <- proc.time()
 
 # Set variables
@@ -1147,15 +1147,15 @@ ggsave(filename = "hist_gev_FD.pdf", plot = hist_gev_FD, path = "../Manuscript",
 ```{r hist_ma1_arma_ar2_D}
 load('results_ma1_D.RData')
 model <- rep("MA(1)", 2000)
-ma1 <- data_frame(results, new_col)
+ma1 <- data_frame(results, model)
 
 load('results_arma_D.RData')
 model <- rep("ARMA(1, 1)", 2000)
-arma <- data_frame(results, new_col)
+arma <- data_frame(results, model)
 
 load('results_ar2_D.RData')
 model <- rep("AR(2)", 2000)
-ar2 <- data_frame(results, new_col)
+ar2 <- data_frame(results, model)
 
 data <- rbind(ma1, arma, ar2)
 
