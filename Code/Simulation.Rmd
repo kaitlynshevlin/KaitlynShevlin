@@ -1221,7 +1221,7 @@ hist_ma1_arma_ar2_FD <- ggplot(data) +
                    geom_histogram(aes(x = p_values, fill = histogram), boundary = 0, binwidth = 1/20) + 
                    scale_x_continuous(name = "p-value", breaks=c(0, 1)) + 
                    theme(legend.position = "none") +
-                   facet_wrap(histogram~model, scales = "free_y")
+                   facet_grid(histogram~model, scales = "free_y")
 hist_ma1_arma_ar2_FD
 
 ggsave(filename = "hist_ma1_arma_ar2_FD.pdf", plot = hist_ma1_arma_ar2_FD, path = "../Manuscript", height = 4.2, width = 6)
