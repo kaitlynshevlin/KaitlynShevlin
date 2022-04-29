@@ -231,6 +231,7 @@ Section 5, for thesis, conclude. For paper, include real data.
 
 Include all figures. Lanzante page numbers
 ——————————————————————————————————————————————
+4/27
 Figure caption, describe what they are (this is naive, etc.)
 In the text, discuss the results (we would expect but)
 
