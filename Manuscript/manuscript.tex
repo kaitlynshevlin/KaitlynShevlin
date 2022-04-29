@@ -38,7 +38,8 @@
 \title{On Misuses of the Kolmogorov--Smirnov Test for One Sample Goodness-of-Fit}
 
 \author{Anthony Zeimbekakis\\
-\href{mailto:anthony.zeimbekakis@uconn.edu}{\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
+\href{mailto:anthony.zeimbekakis@uconn.edu}
+{\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
 Department of Statistics, University of Connecticut\\\\
 Thesis Advisor: Jun Yan\\
 Honors Advisor: Elizabeth Schifano}
@@ -51,15 +52,15 @@ Honors Advisor: Elizabeth Schifano}
 
 \begin{abstract}
 The Kolmogorov--Smirnov (KS) test is one the most popular goodness-of-fit tests 
-for comparing a sample with a hypothesized parametric distribution. Nevertheless, 
-it has often been misused. The standard one-sample KS test applies to independent, 
-continuous data with a hypothesized distribution that is completely specified. 
-It is not uncommon, however, to see in the literature that it was applied to 
-dependent, discrete, or rounded data, with hypothesized distributions containing 
-estimated parameters. For example, it has been ``discovered" multiple times 
-that the test is too conservative when the parameters are estimated. We 
-demonstrate misuses of the one-sample KS test in three scenarios through 
-simulation studies:
+for comparing a sample with a hypothesized parametric distribution. 
+Nevertheless, it has often been misused. The standard one-sample KS test applies
+to independent, continuous data with a hypothesized distribution that is 
+completely specified. It is not uncommon, however, to see in the literature that
+it was applied to dependent, discrete, or rounded data, with hypothesized 
+distributions containing estimated parameters. For example, it has been 
+``discovered" multiple times that the test is too conservative when the 
+parameters are estimated. We demonstrate misuses of the one-sample KS test in 
+three scenarios through simulation studies:
 1) the hypothesized distribution has unspecified parameters;
 2) the data are serially dependent; and
 3) a combination of the first two scenarios.
@@ -97,12 +98,12 @@ conservative character of the KS test when using discrete functions.
 There are remedies that allow the KS test to be used in discrete cases. 
 \citet{Conover} describes a method for finding the exact critical level for 
 discrete cases and derives its power. \citet{Gleser} provides methods for 
-adapting existing algorithms to provide results when F(x) is discontinuous.
+adapting existing algorithms to provide results when $F(x)$ is discontinuous.
 The discrete KS test is available in various statistical software packages.
 The package \textsf{dgof} implements the methods from \citet{Conover} for 
 one-sided tests and the methods from \citet{Gleser} for exact two-sided 
 p-values \citep{Arnold}. The \textsf{KSgeneral} package provides a fast and 
-accurate method for when F(x) is arbitrary, discontinuous, or continuous that 
+accurate method for when $F(x)$ is arbitrary, discontinuous, or continuous that 
 uses an alternative fast Fourier transform based method \citep{Dimitrova}.
 This issue with discrete or rounded is not the focus of this paper, though is a
 common misuse that should be noted.
@@ -162,7 +163,7 @@ Section~\ref{sec:conclusion} concludes with a discussion.
 
 The null distribution of the KS statistic changes when the hypothesized
 distribution contains fitted parameters. In this scenario, the null hypothesis
-is $H_0$: the random sample $X_1, \ldots, X_n$ come from a continuous
+is $H_0$: the random sample $X_1, \ldots, X_n$ comes from a continuous
 distribution $F_{\theta}$ with unspecified parameter $\theta$.
 Let $\hat\theta_n$ be an estimator of $\theta$, which could be, for example,
 maximum likelihood estimator of moment estimator. The test statistic is
@@ -176,27 +177,30 @@ software packages which assumes completely known $F_\theta$ no long applies
 \citep{Steinskog}.
 
 
-For illustration, \jy{give the details of the setting}
-However, the procedure is sometimes performed where the population cumulative 
-distribution $F(x)$ has parameters $\mu=\bar X$, the sample mean, and $\sigma^2=s^2$, 
-the sample variance \citep{Lilliefors}. This case is demonstrated in Figure~\ref{fig:hist_fitted} 
-under the Naive plot. The naive KS test was performed by estimating the parameters 
-of $F(x)$ using the fitted distribution of the sample data. Since the data is generated 
-from a standard normal distribution with seemingly all assumptions met, a uniform 
-distribution of $U(0,1)$ is expected for the p-values. However this is under the 
-assumption that the KS test holds its power, which it no longer does due to using 
-fitted parameters. Therefore, there is notable deviation from the uniform distribution. 
+To demonstrate the consequences of this problem, a simulation is performed. A 
+random sample $X_1, \ldots, X_n$ is generated from the standard normal 
+distribution with sample size $n = 100$. The p-values of $1000$ replicate tests 
+are displayed in the Naive plot of Figure~\ref{fig:hist_fitted}. Each KS test 
+was performed using fitted parameters, i.e. the hypothesized distribution is 
+$N(\bar X, s^2)$ where $\bar X$ is the sample mean and $s^2$ is the sample 
+variance. Since the data is generated from a standard normal distribution with 
+seemingly all assumptions met, a uniform distribution of $U(0, 1)$ is expected 
+for the p-values. However this is under the assumption that the KS test holds 
+its power, which it no longer does due to using fitted parameters. Therefore, 
+there is notable deviation from the uniform distribution. 
 
 
 To fix the problem, parametric bootstrap can be used to approximate the null
 distribution of the testing statistic. 
 \begin{enumerate}
   \item 
-    Draw a random sample $X_1^*,...,X_n^*$ from the fitted distribution $F_{\hat\theta_n}$
+    Draw a random sample $X_1^*,...,X_n^*$ from the fitted distribution 
+    $F_{\hat\theta_n}$
   \item 
     Fit $F_\theta$ to the sample and obtain estimated $\hat\theta_n^*$
   \item
-    Obtain the empirical distribution function $F_n^*$ of $X_1^*, \ldots, X_n^*$.
+    Obtain the empirical distribution function $F_n^*$ of $X_1^*, \ldots, 
+    X_n^*$.
   \item 
     Calculate bootstrap KS statistic
     \[
@@ -210,8 +214,9 @@ distribution of the testing statistic.
 
 
 Nonparametric bootstrap can also be used to approximate the null distribution 
-of the testing statistic. The procedure is similar, however there is a 
-correction for bias that is required \citep{Babu}.
+of the testing statistic. The procedure is similar, however the resampling is 
+performed differently and there is a correction for bias that is required 
+\citep{Babu}.
 \begin{enumerate}
   \item 
     Draw a random sample $X_1^*,...,X_n^*$ from the empirical distribution $F_n$
@@ -236,10 +241,10 @@ The p-value can be calculated by counting the number of bootstrap KS
 statistics greater than or equal to the observed KS statistic, and then dividing 
 by the number of bootstrap samples. Figure~\ref{fig:hist_fitted} displays the 
 results of from our simulations. We would expect the distribution of p-values 
-to be normal in the case where the KStest holds its power. It is clear from the 
-figure that both bootstrap processes correct for the problem of fitted 
-parameters. The plots for the bootstrapped p-values appear to be $U(0,1)$, 
-unlike the naive p-values.
+to be normal in the case where the KS test holds its power. It is clear from the 
+figure that both parametric and nonparametric bootstrap processes correct for 
+the problem of fitted parameters. The plots for the bootstrapped p-values appear
+to be $U(0,1)$, unlike the naive p-values.
 
 \begin{figure}[tbp]
   \centering
@@ -269,10 +274,12 @@ Equation~\ref{eq:ks_standard}. However, since the data is dependent, the null
 hypothesis is wrong and must be corrected. This is demonstrated with a 
 simulation in Figure~\ref{fig:hist_correlation}. Data is generated from a 
 first-order autoregressive model (AR(1)) with a standard normal distribution. 
-The simulationis done with the levels of the AR coefficient $\psi$, varying 
-from $(-3,3)$. The results echo those of \citet{Durilleul} that the KS statistic
-is too liberal for positive autocorrelation values, and that the behavior is 
-asymmetrical for negative values.
+P-values are gathered from $1000$ replicate tests for different levels of the 
+AR coefficient $\psi$, varying from $(-3,3)$. In the presence of serially 
+dependent data, the distribution of p-values no longer follows $U(0, 1)$ as 
+would be expected of a valid test. The results echo those of \citet{Durilleul} 
+that the KS statistic is too liberal for positive autocorrelation values, and 
+that the behavior is asymmetrical for negative values.
 
 \begin{figure}[tbp]
   \centering
@@ -317,32 +324,44 @@ follows.
     the null distribution of the observed statistic.      
 \end{enumerate}
 
-As mentioned, throughout the procedure we assume an AR(1) structure regardless 
-of the true dependence. If the true dependence is indeed a normal copula with 
-an AR(1) structure, this method is exact. When the true dependence is not AR(1),
-it may still give a reasonable approximation that can be useful for practical 
-purposes. This is demonstrated with different dependence structures in 
-Figure~\ref{fig:hist_ma1_FD}.
+As mentioned, throughout the procedure we assume an AR(1) dependence structure 
+regardless of the true dependence. If the true dependence is indeed a normal 
+copula with an AR(1) structure, this method is exact. When the true dependence 
+is not AR(1), it may still give a reasonable approximation that can be useful 
+for practical purposes. This is demonstrated with different dependence 
+structures in Figure~\ref{fig:hist_ma1_arma_ar2_D}.
 
 \begin{figure}[tbp]
   \centering
   \includegraphics{hist_ar1_D}
-  \caption{The Naive plot is the histogram of p-values from the standard KS 
-  test. The Copula plot is the histogram of p-values from implementing 
-  parametric bootstrap with copulas for dependence. In each case, $1000$ 
-  replicate tests were performed with the data generated from an AR(1) process 
-  of the standard normal distribution with $\psi = .5$. The sample size is $n = 
-  100$ and $B = 1000$ bootstrap samples are obtained for each test.}
+  \caption{The Naive plot (left) is the histogram of p-values from the 
+  standard KS test. The Copula plot (right) is the histogram of p-values from 
+  implementing parametric bootstrap with copulas for dependence. In each case, 
+  $1000$ replicate tests were performed with the data generated from an AR(1) 
+  process of the standard normal distribution with $\psi = .5$. The sample size 
+  is $n = 100$ and $B = 1000$ bootstrap samples are obtained for each test.}
   \label{fig:hist_ar1_D}
 \end{figure}
 
 Figure~\ref{fig:hist_ar1_D} displays the results of the copula remedy for 
-dependent data. The data is generated from an AR(1) model with $\psi = .5$. The 
-copula used is to model dependence is the normal copula. $1000$ replicate tests 
-were performed with $B = 1000$ bootstrap samples per test.
-\jy{present other scenarios too}
-The naive test is performed by simply using the KS test without correcting for 
-any potential dependence.
+dependent data. The data is generated from the standard normal distribution with
+an AR(1) dependence structure where $\psi = .5$. The copula used is to model 
+dependence is the normal copula. The distribution of p-values is again expected
+to be $U(0, 1)$ for a valid test. The Naive plot is clearly not uniform and 
+reinforces the results shown in Figure~\ref{fig:hist_correlation}. The Copula 
+plot, which implements the aforementioned procedure to correct for dependence
+in the data, appears to be uniform and restores the power of the KS test.
+
+The procedure detailed in this section can also provide a reasonable 
+approximation in cases where the true dependence structure is not far from 
+AR(1). Figure~\ref{fig:hist_ma1_arma_ar2_D} shows the distribution of p-values 
+for dependence structures MA(1), ARMA(1, 1), and AR(2). As expected, 
+naively performing the KS test without correcting for dependence provides plots 
+of p-values that deviate from the uniform distribution. In the case of MA(1) 
+and ARMA(1, 1), the true dependence structure is close enough to our 
+assumption of AR(1) that the bootstrap procedure provides a reasonable 
+approximation. However, the AR(2) copula plot shows the limitation of this 
+technique when the true dependence is too far from our assumption.
 
 \begin{figure}[tbp]
   \centering
@@ -356,6 +375,13 @@ any potential dependence.
   performed with sample size $n = 100$ and $B = 1000$ bootstrap samples.}
   \label{fig:hist_ma1_arma_ar2_D}
 \end{figure}
+
+To further demonstrate the effectiveness of the procedure, we perform similar 
+simulations on other families of distributions. 
+Figure~\ref{fig:hist_gamma_gev_D} displays the results of tests using dependent 
+data generated from the gamma and the generalized extreme value distributions.
+The procedure corrects the distribution of p-values for both distributions and 
+is shown to be applicable irregardless of the family of distribution tested.
 
 \begin{figure}[tbp]
   \centering
@@ -386,9 +412,9 @@ KS statistic is calculated as in Equation~\eqref{eq:ks_fitted}. The bootstrap
 procedure in Section~\ref{sec:fitted} is no longer valid because the serial
 dependence is not accounted for. Let $r$ be the AR(1) coefficient of the normal 
 copula that matches the sample first-order Spearman's rho of the observed data 
-as obtained by the \texttt{iRho} function in the \textsf{copula} package. We 
-propose the following bootstrap procedure to assess the significance of the 
-observed KS statistic.
+as obtained by the \texttt{iRho} function in the \textsf{copula} package 
+\citep{Copula}. We propose the following bootstrap procedure to assess the 
+significance of the observed KS statistic.
 \begin{enumerate}
 \item
   Generate $Z_1, \ldots, Z_n$ from an AR(1) process with autocorrelation
