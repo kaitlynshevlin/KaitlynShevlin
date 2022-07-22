@@ -43,6 +43,8 @@
 \setcounter{bottomnumber}{50}
 
 \newcommand{\jy}[1]{\textcolor{blue}{JY: #1}}
+\newcommand{\eds}[1]{\textcolor{red}{EDS: (#1)}}
+
 
 \title{On Misuses of the Kolmogorov--Smirnov Test for One-Sample Goodness-of-Fit}
 
@@ -83,7 +85,8 @@ The Kolmogorov-Smirnov (KS) test is one of the most popular goodness-of-fit
 tests for comparing a sample with a hypothesized parametric distribution.
 Let $X_1, ..., X_n$ be a random sample from some continuous distribution. 
 The null hypothesis $H_0$ is that the population distribution is $F$.
-Let $F_n(\cdot)$ be the empirical cumulative distribution. The KS statistic is
+Let $F_n(\cdot)$ be the empirical cumulative distribution \eds{define ecdf}. 
+The KS statistic \eds{cite} is
 \begin{equation}
   \label{eq:ks_standard}
   D = \sup_x | F_{n}(x) - F(x) |.
@@ -113,7 +116,8 @@ one-sided tests and the methods from \citet{Gleser} for exact two-sided
 p-values \citep{Arnold}. The \textsf{KSgeneral} package provides a fast and 
 accurate method for when $F(x)$ is arbitrary, discontinuous, or continuous that 
 uses an alternative fast Fourier transform based method \citep{Dimitrova}.
-This issue with discrete or rounded is not the focus of this paper, though is a
+This issue with discrete or rounded data is not the focus of this paper, though
+ it is a
 common misuse that should be noted.
 
 
@@ -122,7 +126,7 @@ contains fitted parameters. \citet{Steinskog} ``discovers'' the change in power
 when using estimated parameters and stresses caution in using the KS test in 
 such ways. \citet{Lilliefors} shows for the normal distribution that using the 
 standard table when values of the mean and standard deviation are estimated 
-obtains extremely conservative results. This is supported by \citet{Capasso}, 
+yields extremely conservative results. This is supported by \citet{Capasso}, 
 who concludes that failing to re-estimate the parameters may lead to wrong, 
 overly-conservative approximations to the distributions of goodness-of-fit test 
 statistics based on the empirical distribution function. \citet{Capasso} also 
@@ -142,8 +146,8 @@ behavior is asymmetrical with respect to positive values. For remedies,
 modeled by the second-order auto-regressive (AR) process where the parameters 
 are known. \citet{Lanzante} tests various strategies for dealing with temporal 
 dependence and concludes that a test based on Monte-Carlo simulations performed 
-the best. We propose a parametric bootstrap procedure involving copulas to 
-account for dependence.
+the best. %We propose a parametric bootstrap procedure involving copulas to 
+%account for dependence.
 
 The contribution of this paper is a demonstration of misuses of the one-sample
 KS test in three scenarios and their remedies in practice. The scenarios are 
@@ -162,20 +166,23 @@ investigates the scenario where the hypothesized distribution has unspecified
 parameters. Both parametric and nonparametric bootstrap are available to fix the
 issue. Section~\ref{sec:dependence} investigates the scenario where the data of 
 the empirical distribution is serially dependent. A bootstrap procedure 
-employing copulas is a working solution. Section~\ref{sec:fittedwithdependence}
+employing copulas to account for dependence is proposed as a working solution. 
+Section~\ref{sec:fittedwithdependence}
 explores the case where a combination of the first two scenarios occurs. The 
-copula procedure can be adjusted for fitted parameters to be available as a fix. 
+copula procedure can be adjusted for the use of fitted parameters as a remedy. 
 Section~\ref{sec:conclusion} concludes with a discussion.
 
 \section{Unspecified Parameters}
 \label{sec:fitted}
 
 The null distribution of the KS statistic changes when the hypothesized
-distribution contains fitted parameters. In this scenario, the null hypothesis
+distribution contains fitted parameters. 
+\eds{what is the null distribution when not using fitted parameters}.  
+In this scenario, the null hypothesis
 is $H_0$: the random sample $X_1, \ldots, X_n$ comes from a continuous
 distribution $F_{\theta}$ with unspecified parameter vector $\theta$.
-Let $\hat\theta_n$ be an estimator of $\theta$, which could be, for example,
-maximum likelihood estimator of moment estimator. The test statistic is
+Let $\hat\theta_n$ be an estimator of $\theta$, which could be, for example, a
+maximum likelihood estimator or moment estimator. The test statistic is
 \begin{equation}
   \label{eq:ks_fitted}
   D = \sup_x | F_n(x) - F_{\hat\theta_n}(x) |.
@@ -188,14 +195,19 @@ software packages which assumes completely known $F_\theta$ no longer applies
 
 To demonstrate the consequences of this problem, a simulation is performed. A 
 random sample $X_1, \ldots, X_n$ is generated from the standard normal 
-distribution with sample size $n = 100$. The p-values of $1000$ replicate tests 
-are displayed in the Naive plot of Figure~\ref{fig:hist_fitted}. Each KS test 
-was performed using fitted parameters, i.e. the hypothesized distribution is 
+distribution with sample size $n = 100$. The p-values of $1000$ replicate tests
+ of normality  
+are displayed in the Naive plot of Figure~\ref{fig:hist_fitted}. 
+\eds{how are these p-values calculated?}
+Each KS test 
+was performed using fitted parameters, i.e., the hypothesized distribution is 
 $N(\bar X, s^2)$ where $\bar X$ is the sample mean and $s^2$ is the sample 
-variance. Since the data is generated from a standard normal distribution with 
-seemingly all assumptions met, a uniform distribution of $U(0, 1)$ is expected 
-for the p-values. However this is under the assumption that the KS test
-assumptions hold, which no longer do due to using fitted parameters. Therefore, 
+variance. Since the data is truly generated from a standard normal distribution,
+ %with 
+%seemingly all assumptions met, 
+a uniform distribution of $U(0, 1)$ would naively be expected for the p-values.
+However this should only be expected when the KS test assumptions hold, and they
+ do not due to using fitted parameters. Therefore, 
 there is notable deviation from the uniform distribution. 
 
 
@@ -265,7 +277,8 @@ to be $U(0,1)$, unlike the naive p-values.
   the histogram of p-values from implementing nonparametric bootstrap with a 
   correction for bias. In each case, $1000$ replicate tests were performed on 
   the standard normal distribution with sample size $n = 100$. $B = 1000$ 
-  bootstrap samples are obtained for each test.}
+  bootstrap samples are obtained for each test. \eds{perhaps use density hist vs
+	freq. hist (here and elsewhere)?}}
   \label{fig:hist_fitted}
 \end{figure}
 
@@ -274,22 +287,27 @@ to be $U(0,1)$, unlike the naive p-values.
 \label{sec:dependence}
 
 The KS test also displays issues in the case of dependent data. As mentioned, an 
-assumption of the test is that the data is independent. Unfortunately, real data
+assumption of the test is that the data is independent. Real data, however,
 is often temporally or spatially dependent and the results of a goodness-of-fit 
 test would be valuable. When the KS test is performed on dependent data it 
 performs poorly. In this situation, the null hypothesis is $H_0$: the random 
 sample $X_1, \ldots, X_n$ come from a continuous distribution $F$ where $F$ has 
 completely specified parameters. The test statistic is the same as 
 Equation~\eqref{eq:ks_standard}. However, since the data is dependent, the null 
-hypothesis is wrong and must be corrected. This is demonstrated with a 
+hypothesis is wrong and must be corrected. 
+\eds{null hypothesis or null distribution? or both?}
+This is demonstrated with a 
 simulation in Figure~\ref{fig:hist_correlation}. Data is generated from a 
 first-order autoregressive model (AR(1)) with a standard normal distribution. 
 P-values are gathered from $1000$ replicate tests for different levels of the 
-AR coefficient $\psi$, varying from $(-3,3)$. In the presence of serially 
+AR coefficient $\psi$, varying from $(-3,3)$. 
+\eds{how are these p-values calculated?}
+In the presence of serially 
 dependent data, the distribution of p-values no longer follows $U(0, 1)$ as 
 would be expected of a valid test. The results echo those of \citet{Durilleul} 
-that the KS statistic is too liberal for positive autocorrelation values, and 
-that the behavior is asymmetrical for negative values.
+that the KS statistic is too liberal in the presence of positive
+autocorrelation, and that the behavior is asymmetrical for negative
+ autocorrelation.
 
 \begin{figure}[tbp]
   \centering
@@ -309,7 +327,9 @@ completely characterizes the dependence structure of a multivariate
 distribution \citep{Copula, Hofert}. For simplicity, we assume a normal copula 
 with an AR(1) structure to characterize the serial dependence of the 
 observations. The AR(1) parameter $r$ of the normal copula is set to match the 
-be the sample serial Spearman's rho of the observed sample. The procedure is as 
+sample serial Spearman's rho of the observed data. 
+\eds{What is the difference between $\psi$ and $r$?}
+The procedure is as 
 follows.
   
 \begin{enumerate}
@@ -405,7 +425,7 @@ simulations on other families of distributions.
 Figure~\ref{fig:hist_gamma_gev_D} displays the results of tests using dependent 
 data generated from the gamma and the generalized extreme value distributions.
 The procedure corrects the distribution of p-values for both distributions and 
-is shown to be applicable irregardless of the family of distribution tested.
+is shown to be applicable regardless of the family of distribution tested.
 
 
 \section{Unspecified Parameters and Serially Dependent Data}
@@ -489,7 +509,7 @@ uniform p-values and restores the size of the KS test.
   \label{fig:hist_ma1_arma_ar2_FD}
 \end{figure}
 
-Similar to Section~\ref{sec:dependence}, the copula fix is not a complete 
+Similar to Section~\ref{sec:dependence}, the copula approach is not a complete 
 solution. Regardless of the true dependence in the data we assume an AR(1) 
 dependence structure by taking the lag-1 sample auto-spearman rho. However, we 
 can show that as long as the AR(1) assumption is a close approximation, the 
@@ -523,7 +543,7 @@ procedure.
 It is also possible to apply our procedure to other families of distributions. 
 The data in Figure~\ref{fig:hist_gamma_gev_FD} is generated from the gamma and 
 generalized extreme value distributions. The results are favorable and show that 
-the procedure outlined as a fix for fitted parameters and spatially dependent 
+the procedure outlined as a remedy for fitted parameters and spatially dependent 
 can be adapted for various families of distributions.
 
 
@@ -535,19 +555,20 @@ completely specified and the data is independent. When these assumptions are
 violated, the test is no longer accurate and remedies must be performed. In the 
 case of fitted parameters, parametric and non-parametric bootstrap can restore 
 the size of the test. A bias correction is required if the non-parametric form 
-is used \citep{Babu}. In the case of dependent data, a procedure using bootstrap 
+is used \citep{Babu}. In the case of \eds{serially} dependent data, a procedure 
+using bootstrap 
 with copulas to model dependency shows positive results. When both assumptions 
-are violated, that is the case where the data has dependence and parameters must 
+are violated, i.e., where the data has \eds{serial} dependence and parameters 
+must 
 be fitted, an adjusted copula procedure also shows positive results. The tests 
 appear effective for a variety of families of distributions. The copula remedy 
 is not a complete solution and has limitations. Regardless of the true 
 dependence, we assume an AR(1) dependence structure. Therefore, if the AR(1) 
-dependence structure is a close approximation of the truth, the fix can work. 
+dependence structure is a close approximation of the truth, the approach can work. 
 However, in cases such as AR(2), if the approximation is too far from the true 
-dependence structure the fix does not completely solve the issue. As well, tests 
-were only performed with the normal copula. It is possible that other copulas
-could provide stronger results based on the true dependence of the data.
-
+dependence structure the approach does not completely remedy the issue. As well, 
+tests were only performed with the normal copula. It is possible that other 
+copulas could provide stronger results based on the true dependence of the data.
 
 \bibliographystyle{chicago}
 \bibliography{citations.bib}
