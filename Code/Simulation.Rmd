@@ -10,6 +10,7 @@ library(copula)
 library(evd)
 library(ismev)
 library(tseries)
+library(forecast)
 source('tspb.R')
 ```
 
@@ -185,17 +186,17 @@ genData <- function(n, qdist, ..., copula, rho) {
 ```
 
 ```{r AR(1) D}
-test_copula_D <- function(x, dist, B, mean, sd) {
+test_copula_D <- function(x, pdist, qdist, ..., B, wcopula = normalCopula) {
 
     # Get observed statistic
     n <- length(x)
 
-    stat  <- ks.test(x, dist, mean = mean, sd = sd)$statistic
+    stat  <- ks.test(x, pdist, ...)$statistic
     
     # Get lag-1 sample auto-spearman rho
     rho  <-  cor(x[-1], x[-n], method = "spearman")
-    r <- iRho(normalCopula(), rho)
-    np <- normalCopula(r)
+    r <- iRho(wcopula(), rho)
+    wcop <- wcopula(r)
     
     # Perform parametric bootstrap to get an empirical distribution of stat
     stat.b <- double(n)
@@ -205,14 +206,14 @@ test_copula_D <- function(x, dist, B, mean, sd) {
         # 2. There is temporal dependence
         u <- runif(n) 
         for (j in 2:n) {
-            u[j]  <- cCopula(c(u[j-1], u[j]), np, indices = 2, inverse = TRUE)
+            u[j]  <- cCopula(c(u[j-1], u[j]), wcop, indices = 2, inverse = TRUE)
         }
         
         # Transform bootstrap sample and fit the parameters
-        x.b <- qnorm(u, mean = mean, sd = sd)
+        x.b <- qdist(u, ...)
         
         # Gather bootstrap sample's test statistic
-        stat.b[i] <- ks.test(x.b, dist, mean = mean, sd = sd)$statistic
+        stat.b[i] <- ks.test(x.b, pdist, ...)$statistic
     }
     
     # Return empirical p-value
@@ -225,8 +226,8 @@ test_copula_D <- function(x, dist, B, mean, sd) {
 }
 
 # Standard KS test
-test_standard_ks <- function(x, mean, sd) {
-  p.value <- ks.test(x, "pnorm", mean = mean, sd = sd)$p.value
+test_standard_ks <- function(x, pdist, ...) {
+  p.value <- ks.test(x, pdist, ...)$p.value
   list(p.value = p.value)
 }
 
@@ -237,20 +238,23 @@ n <- 100
 ar <- 0.5
 counter <- 0
 nrep <- 1000
-B <- 1000
+B <- 100
 mean <- 0
 sd <- 1
 
 # P-vals from using bootstrap with copulas
-pvals_copula <- replicate(nrep, test_copula_D(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), 
-                                              "pnorm", 
+pvals_copula <- replicate(nrep, test_copula_D(genData(n = 100, qdist = qnorm, mean = 0, sd = 1, copula = claytonCopula, rho = 0.5), 
+                                              pdist = pnorm, 
+                                              qdist = qnorm,
+                                              mean = mean,
+                                              sd = sd,
                                               B = B, 
-                                              mean = mean, 
-                                              sd = sd))
+                                              wcopula = normalCopula))
 counter <- 0
 
 # P-vals from standard KS test
-pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), 
+pvals_naive <- replicate(nrep, test_standard_ks(genData(n = 100, qdist = qnorm, mean = 0, sd = 1, copula = claytonCopula, rho = 0.5), 
+                                                pdist = pnorm,
                                                 mean = mean, 
                                                 sd = sd)$p.value)
 
@@ -289,14 +293,17 @@ sd <- 1
 
 # P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula_D(arima.sim(list(ma = 0.5), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n), 
-                                              "pnorm", 
-                                              B = B,
+                                              pdist = pnorm, 
+                                              qdist = qnorm,
                                               mean = mean,
-                                              sd = sd))
+                                              sd = sd,
+                                              B = B,
+                                              wcopula = normalCopula))
 counter <- 0
 
 # P-vals from standard KS test
 pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(ma = 0.5), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n),
+                                                pdist = pnorm,
                                                 mean = mean,
                                                 sd = sd)$p.value)
 
@@ -340,10 +347,12 @@ pvals_copula <- replicate(nrep, test_copula_D(arima.sim(list(ar = ar,
                                                       rand.gen=rnorm, 
                                                       sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
                                                       n = n), 
-                                            "pnorm", 
-                                            B = B,
+                                            pdist = pnorm, 
+                                            qdist = qnorm,
                                             mean = mean,
-                                            sd = sd))
+                                            sd = sd,
+                                            B = B,
+                                            wcopula = normalCopula))
 counter <- 0
 
 # P-vals from standard KS test
@@ -352,6 +361,7 @@ pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(ar = ar,
                                                       rand.gen=rnorm, 
                                                       sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
                                                       n = n),
+                                                pdist = pnorm,
                                                 mean = mean,
                                                 sd = sd)$p.value)
 
@@ -395,10 +405,12 @@ pvals_copula <- replicate(nrep, test_copula_D(arima.sim(list(order = c(2, 0, 0),
                                                       rand.gen=rnorm,
                                                       sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)),
                                                       n = n), 
-                                            "pnorm", 
-                                            B = B,
+                                            pdist = pnorm, 
+                                            qdist = qnorm,
                                             mean = mean,
-                                            sd = sd))
+                                            sd = sd,
+                                            B = B,
+                                            wcopula = normalCopula))
 counter <- 0
 
 # P-vals from standard KS test
@@ -407,6 +419,7 @@ pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(order = c(2, 0, 0
                                                       rand.gen=rnorm,
                                                       sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)),
                                                       n = n),
+                                                pdist = pnorm,
                                                 mean = mean,
                                                 sd = sd)$p.value)
 
@@ -432,52 +445,6 @@ ggsave(filename = "hist_ar2_D.pdf", plot = hist_ar2_D, path = "../Manuscript", h
 ```
 
 ```{r Gamma D}
-# Testing bootstrap with copulas for gamma distribution
-test_gamma_D <- function(x, dist, B = 100, wcopula = normalCopula, shape, scale) {
-
-    # Get observed stat
-    n <- length(x)
-    
-    stat  <- ks.test(x, dist, shape = shape, scale = scale)$statistic
-
-    # Get lag-1 sample auto-spearman rho
-    rho  <-  cor(x[-1], x[-n], method = "spearman")
-    r <- iRho(wcopula(), rho)
-    wcop <- wcopula(r)
-    
-    # Parametric bootstrap to get an empirical distribution of stat
-    stat.b <- double(n)
-    
-    for (i in 1:B) {
-        # 1. The marginal distribution is the fitted dist
-        # 2. There is temporal dependence
-        u <- runif(n)
-        for (j in 2:n) {
-            u[j]  <- cCopula(c(u[j-1], u[j]), wcop, indices = 2, inverse = TRUE)
-        }
-        
-        # Transform the bootstrap sample and fit the parameters
-        x.b <- qgamma(u, shape = shape, scale = scale)
-        
-        # Calculate new test statistic
-        stat.b[i] <- ks.test(x.b, dist, shape = shape, scale = scale)$statistic
-    }
-    
-    # Return empirical p-value    
-    p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
-    
-    counter <<- counter + 1
-    cat(counter, "")
-    
-    return(p.value)
-}
-
-# Naive function that incorrectly uses fitted parameters for gamma distribution
-test_standard_gamma <- function(x, shape, scale) {
-  p.value <- ks.test(x, "pgamma", shape = shape, scale = scale)$p.value
-  list(p.value = p.value)
-}
-
 ptm <- proc.time()
 
 # Set variables
@@ -490,15 +457,18 @@ shape <- 3
 scale <- 1
 
 # P-vals from using bootstrap with copulas
-pvals_copula <- replicate(nrep, test_gamma_D(genData(n, qgamma, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
-                                             "pgamma", 
-                                             B = B,
+pvals_copula <- replicate(nrep, test_copula_D(genData(n, qgamma, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
+                                             pdist = pgamma,
+                                             qdist = qgamma,
                                              shape = shape,
-                                             scale = scale))
+                                             scale = scale,
+                                             B = B,
+                                             wcopula = normalCopula))
 counter <- 0
 
 # P-vals from naively using fitted parameters
-pvals_naive <- replicate(nrep, test_standard_gamma(genData(n, qgamma, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
+pvals_naive <- replicate(nrep, test_standard_ks(genData(n, qgamma, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
+                                                   pdist = pgamma,
                                                    shape = shape, 
                                                    scale = scale)$p.value)
 
@@ -524,52 +494,6 @@ ggsave(filename = "hist_gamma_D.pdf", plot = hist_gamma_D, path = "../Manuscript
 ```
 
 ```{r GEV D}
-# Testing bootstrap with copulas for GEV distribution
-test_gev_D <- function(x, B = 100, wcopula = normalCopula, loc, scale, shape) {
-  
-    n <- length(x)
-    
-    # Get observed stat
-    stat  <- ks.test(x, 'pgev', loc = loc, scale = scale, shape = shape)$statistic
-    
-    # Get lag-1 sample auto-spearman rho
-    rho  <-  cor(x[-1], x[-n], method = "spearman")
-    r <- iRho(wcopula(), rho)
-    wcop <- wcopula(r)
-    
-    # Parametric bootstrap to get an empirical distribution of stat
-    stat.b <- double(n)
-
-    for (i in 1:B) {
-        # 1. The marginal distribution is the fitted dist
-        # 2. There is temporal dependence
-        u <- runif(n)
-        for (j in 2:n) {
-            u[j]  <- cCopula(c(u[j-1], u[j]), wcop, indices = 2, inverse = TRUE)
-        }
-
-        # Transform the bootstrap sample
-        x.b <- qgev(u, loc = loc, scale = scale, shape = shape)
-        
-        # Calculate bootstrap test statistic
-        stat.b[i] <- ks.test(x.b, 'pgev', loc = loc, scale = scale, shape = shape)$statistic
-    }
-    
-    # Return empirical p-value    
-    p.value <- (sum(stat.b >= stat) + 0.5) / (B + 1)
-    
-    counter <<- counter + 1
-    cat(counter, "")
-    
-    return(p.value)
-}
-
-# Standard KS test for GEV distribution
-test_standard_gev <- function(x, loc, scale, shape) {
-  p.value <- ks.test(x, "pgev", loc = loc, scale = scale, shape = shape)$p.value
-  list(p.value = p.value)
-}
-
 ptm <- proc.time()
 
 # Set variables
@@ -583,15 +507,19 @@ shape <- 0.2
 scale <- 1
 
 # P-vals from using bootstrap with copulas
-pvals_copula <- replicate(nrep, test_gev_D(genData(n, qgev, loc = loc, shape = shape, scale = scale, copula = normalCopula, rho = rho),
+pvals_copula <- replicate(nrep, test_copula_D(genData(n, qgev, loc = loc, shape = shape, scale = scale, copula = normalCopula, rho = rho),
+                                           pdist = pgev,
+                                           qdist = qgev,
                                            loc = loc, 
                                            shape = shape,
                                            scale = scale,
-                                           B = B))
+                                           B = B,
+                                           wcopula = normalCopula))
 counter <- 0
 
 # P-vals from standard KS test
-pvals_naive <- replicate(nrep, test_standard_gev(genData(n, qgev, loc = loc, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
+pvals_naive <- replicate(nrep, test_standard_ks(genData(n, qgev, loc = loc, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
+                                                 pdist = pgev,
                                                  loc = loc, 
                                                  shape = shape,
                                                  scale = scale)$p.value)
@@ -1262,8 +1190,8 @@ test_copula_D2 <- function(x, pdist, qdist, ..., B) {
     
     ## transform the data to standard normal scale and fit arma(1,1)
     zx <- qnorm(rank(x) / (n + 1))
-    fit <- tseries::arma(zx, include.intercept = FALSE)
     
+    fit <- tseries::arma(zx, include.intercept = FALSE)
     ar <- fit$coef[1]
     ma <- fit$coef[2]
 
@@ -1274,8 +1202,8 @@ test_copula_D2 <- function(x, pdist, qdist, ..., B) {
         ## 1. The marginal distribution is the fitted dist
         ## 2. There is arma(1,1) dependence on the normal scale
         zx.b <- arima.sim(list(ar = ar, ma = ma), 
-                          rand.gen=rnorm, 
-                          sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
+                          rand.gen=rnorm,
+                          sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)),
                           n = n) # simulate from fit
         u <- pnorm(zx.b)
         # Transform bootstrap sample and fit the parameters
@@ -1294,11 +1222,6 @@ test_copula_D2 <- function(x, pdist, qdist, ..., B) {
     return(p.value)
 }
 
-test_standard_ks <- function(x, pdist, ...) {
-  p.value <- ks.test(x, pdist, ...)$p.value
-  list(p.value = p.value)
-}
-
 # Set variables
 n <- 100
 ar <- 0.5
@@ -1311,8 +1234,8 @@ sd <- 1
 
 # P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula_D2(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), 
-                                              pnorm, 
-                                              qnorm,
+                                              pdist = pnorm, 
+                                              qdist = qnorm,
                                               mean = mean, 
                                               sd = sd,
                                               B = B))
@@ -1320,7 +1243,7 @@ counter <- 0
 
 # P-vals from standard KS test
 pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(ar = ar), rand.gen=rnorm, sd = sqrt(1 - ar^2), n = n), 
-                                                pnorm,
+                                                pdist = pnorm,
                                                 mean = mean, 
                                                 sd = sd)$p.value)
 
@@ -1331,7 +1254,7 @@ results <- data_frame(p_values, histogram)
 
 results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
 
-save(results, file = "results_ar1_D2.RData")
+#save(results, file = "results_ar1_D2.RData")
 
 # Generate histograms plot
 hist_ar1_D2 <- ggplot(results) + 
@@ -1349,14 +1272,14 @@ ar <- 0.5
 ma <- 0.5
 counter <- 0
 nrep <- 1000
-B <- 1000
+B <- 100
 mean <- 0
 sd <- 1
 
 # P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula_D2(arima.sim(list(ma = ma), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n), 
-                                              pnorm, 
-                                              qnorm,
+                                              pdist = pnorm, 
+                                              qdist = qnorm,
                                               mean = mean, 
                                               sd = sd,
                                               B = B))
@@ -1364,7 +1287,7 @@ counter <- 0
 
 # P-vals from standard KS test
 pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(ma = ma), rand.gen = rnorm, sd = sqrt(1/(1+ma^2)), n = n), 
-                                                pnorm,
+                                                pdist = pnorm,
                                                 mean = mean, 
                                                 sd = sd)$p.value)
 
@@ -1375,7 +1298,7 @@ results <- data_frame(p_values, histogram)
 
 results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
 
-save(results, file = "results_ma1_D2.RData")
+#save(results, file = "results_ma1_D2.RData")
 
 # Generate histograms plot
 hist_ma1_D2 <- ggplot(results) + 
@@ -1393,7 +1316,7 @@ ar <- 0.5
 ma <- 0.5
 counter <- 0
 nrep <- 1000
-B <- 1000
+B <- 100
 mean <- 0
 sd <- 1
 
@@ -1403,8 +1326,8 @@ pvals_copula <- replicate(nrep, test_copula_D2(arima.sim(list(ar = ar,
                                                       rand.gen=rnorm, 
                                                       sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
                                                       n = n), 
-                                              pnorm, 
-                                              qnorm,
+                                              pdist = pnorm, 
+                                              qdist = qnorm,
                                               mean = mean, 
                                               sd = sd,
                                               B = B))
@@ -1416,7 +1339,7 @@ pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(ar = ar,
                                                       rand.gen=rnorm, 
                                                       sd = sqrt((1-(ar^2))/(1+2*ar*ma+ma^2)), 
                                                       n = n), 
-                                                pnorm,
+                                                pdist = pnorm,
                                                 mean = mean, 
                                                 sd = sd)$p.value)
 
@@ -1427,7 +1350,7 @@ results <- data_frame(p_values, histogram)
 
 results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
 
-save(results, file = "results_arma_D2.RData")
+#save(results, file = "results_arma_D2.RData")
 
 # Generate histograms plot
 hist_arma_D2 <- ggplot(results) + 
@@ -1445,7 +1368,7 @@ b1 <- 0.5
 b2 <- 0.3
 counter <- 0
 nrep <- 1000
-B <- 1000
+B <- 100
 mean <- 0
 sd <- 1
 
@@ -1455,8 +1378,8 @@ pvals_copula <- replicate(nrep, test_copula_D2(arima.sim(list(order = c(2, 0, 0)
                                                       rand.gen=rnorm,
                                                       sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)),
                                                       n = n), 
-                                              pnorm, 
-                                              qnorm,
+                                              pdist = pnorm, 
+                                              qdist = qnorm,
                                               mean = mean, 
                                               sd = sd,
                                               B = B))
@@ -1468,7 +1391,7 @@ pvals_naive <- replicate(nrep, test_standard_ks(arima.sim(list(order = c(2, 0, 0
                                                       rand.gen=rnorm,
                                                       sd = sqrt(((1+b2)*(1-b2-b1)*(1-b2+b1))/(1-b2)),
                                                       n = n), 
-                                                pnorm,
+                                                pdist = pnorm,
                                                 mean = mean, 
                                                 sd = sd)$p.value)
 
@@ -1479,7 +1402,7 @@ results <- data_frame(p_values, histogram)
 
 results$histogram <- factor(results$histogram, levels = c("Naive", "Copula"))
 
-save(results, file = "results_ar2_D2.RData")
+#save(results, file = "results_ar2_D2.RData")
 
 # Generate histograms plot
 hist_ar2_D2 <- ggplot(results) + 
@@ -1535,8 +1458,8 @@ scale <- 1
 
 # P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula_D2(genData(n, qgamma, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
-                                             pgamma, 
-                                             qgamma,
+                                             pdist = pgamma, 
+                                             qdist = qgamma,
                                              shape = shape,
                                              scale = scale,
                                              B = B))
@@ -1544,7 +1467,7 @@ counter <- 0
 
 # P-vals from naively using fitted parameters
 pvals_naive <- replicate(nrep, test_standard_ks(genData(n, qgamma, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
-                                                pgamma,
+                                                pdist = pgamma,
                                                 shape = shape,
                                                 scale = scale)$p.value)
 
@@ -1579,8 +1502,8 @@ scale <- 1
 
 # P-vals from using bootstrap with copulas
 pvals_copula <- replicate(nrep, test_copula_D2(genData(n, qgev, loc = loc, shape = shape, scale = scale, copula = normalCopula, rho = rho),
-                                               pgev,
-                                               qgev,
+                                               pdist = pgev,
+                                               qdist = qgev,
                                                loc = loc, 
                                                shape = shape,
                                                scale = scale,
@@ -1589,7 +1512,7 @@ counter <- 0
 
 # P-vals from standard KS test
 pvals_naive <- replicate(nrep, test_standard_ks(genData(n, qgev, loc = loc, shape = shape, scale = scale, copula = normalCopula, rho = rho), 
-                                                 pgev,
+                                                 pdist = pgev,
                                                  loc = loc, 
                                                  shape = shape,
                                                  scale = scale)$p.value)
