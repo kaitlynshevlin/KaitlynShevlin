@@ -49,11 +49,12 @@
 \title{On Misuses of the Kolmogorov--Smirnov Test for One-Sample Goodness-of-Fit}
 
 \author{Anthony Zeimbekakis\\
-\href{mailto:anthony.zeimbekakis@uconn.edu}
-{\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
-Department of Statistics, University of Connecticut\\\\
-Thesis Advisor: Jun Yan\\
-Honors Advisor: Elizabeth Schifano}
+%   \href{mailto:anthony.zeimbekakis@uconn.edu}
+% {\nolinkurl{anthony.zeimbekakis@uconn.edu}}\\
+  Elizabeth Schifano\\
+  Jun Yan\\[1ex]
+  Department of Statistics, University of Connecticut\\
+}
 \date{}
 
 \begin{document}
@@ -62,20 +63,26 @@ Honors Advisor: Elizabeth Schifano}
 \doublespace
 
 \begin{abstract}
-The Kolmogorov--Smirnov (KS) test is one of the most popular goodness-of-fit tests 
-for comparing a sample with a hypothesized parametric distribution. 
+The Kolmogorov--Smirnov (KS) test is one of the most popular goodness-of-fit
+tests for comparing a sample with a hypothesized parametric distribution.
 Nevertheless, it has often been misused. The standard one-sample KS test applies
 to independent, continuous data with a hypothesized distribution that is 
 completely specified. It is not uncommon, however, to see in the literature that
 it was applied to dependent, discrete, or rounded data, with hypothesized 
 distributions containing estimated parameters. For example, it has been 
-``discovered'' multiple times that the test is too conservative when the 
-parameters are estimated. We demonstrate misuses of the one-sample KS test in 
+``discovered'' multiple times that the test is too conservative when
+hypothesized distribution has parameters that need to be estimated.
+We demonstrate misuses of the one-sample KS test in 
 three scenarios through simulation studies:
 1) the hypothesized distribution has unspecified parameters;
 2) the data are serially dependent; and
 3) a combination of the first two scenarios.
 For each scenario, we provide remedies for practical applications.
+
+\bigskip
+\noindent\sc{Keywords}:
+nonparametric bootstrap;
+parametric bootstrap;
 \end{abstract}
 
 \section{Introduction}
@@ -83,42 +90,36 @@ For each scenario, we provide remedies for practical applications.
 
 The Kolmogorov-Smirnov (KS) test is one of the most popular goodness-of-fit 
 tests for comparing a sample with a hypothesized parametric distribution.
-Let $X_1, ..., X_n$ be a random sample from some continuous distribution. 
-The null hypothesis $H_0$ is that the population distribution is $F$.
-Let $F_n(\cdot)$ be the empirical cumulative distribution \eds{define ecdf}. 
-The KS statistic \eds{cite} is
+Let $X_1, ..., X_n$ be a random sample of size~$n$ from a continuous
+distribution. The null hypothesis $H_0$ is that $X_i$'s follow distribution~$F$.
+Let $F_n(t) = \sum_{i=1}^n I(X_i \le t) / n$ be the empirical cumulative
+distribution function of the sample, where $I(\cdot)$ is the indicator
+function. The KS test statistic is
 \begin{equation}
   \label{eq:ks_standard}
-  D = \sup_x | F_{n}(x) - F(x) |.
+  D_n = \sup_x | F_{n}(x) - F(x) |.
 \end{equation}
-The distribution of $D$ under $H_0$ turns out to be independent of the
-distribution $F$ and a table of critical values for $D$ has been constructed
-\citep{Massey} for various sample sizes $n$ and significance 
-levels $\alpha$. If the value of $D$ exceeds the test's corresponding critical 
-value the null hypothesis is rejected. The KS test is available in popular 
-statistical software packages, such as function \texttt{ks.test} in R 
-\citep{R, Marsaglia}.
+The asymptotic distribution of $D_n$ under $H_0$ is independent of the
+distribution $F$. As $n \to \infty$, $\sqrt{n} D_n$ converges in distribution to
+the supremum of standard Brownian bridge \citep{kolmogorov1933sulla}. For large
+samples, the tests can be performed with a table \citep{smirnov1948table}.
+Critical values for small samples ($n \le 35$) has also been given
+\citep{Massey}. The KS test is available in popular 
+statistical software packages, such as function \texttt{ks.test} in R package
+\textsf{stats} \citep{R, Marsaglia}.
+
 
 The standard one-sample KS test applies to independent data with a continuous
 hypothesized distribution that is completely specified. In practice, however, it
 has often been applied without realizing that one or more of these assumptions
-do not hold.
-
-\citet{Noether} provides a brief demonstration of the 
-conservative character of the KS test when using discrete functions. 
-There are remedies that allow the KS test to be used in discrete cases. 
-\citet{Conover} describes a method for finding the exact critical level for 
-discrete cases and derives its power. \citet{Gleser} provides methods for 
-adapting existing algorithms to provide results when $F(x)$ is discontinuous.
-The discrete KS test is available in various statistical software packages.
-The package \textsf{dgof} implements the methods from \citet{Conover} for 
-one-sided tests and the methods from \citet{Gleser} for exact two-sided 
-p-values \citep{Arnold}. The \textsf{KSgeneral} package provides a fast and 
-accurate method for when $F(x)$ is arbitrary, discontinuous, or continuous that 
-uses an alternative fast Fourier transform based method \citep{Dimitrova}.
-This issue with discrete or rounded data is not the focus of this paper, though
- it is a
-common misuse that should be noted.
+do not hold. For example, \citet{Noether} demonstrated the conservativeness of
+the KS test when applied to discontinuous distributions. The null distribution
+of the KS statistic is no longer distribution free. Computing the
+exact and asymptotic distribution of $D_n$ is challenging. Fortunately, the null
+distribution of the KS statistic when the underlying distribution is
+discontinuous has been efficiently addressed by \citet{Dimitrova} with an
+companion R package \textsf{KSgeneral}. Although a common misuse of KS test, the
+issue with discontinuous or data is not our focus.
 
 
 The standard KS test is not applicable when the hypothesized distribution 
